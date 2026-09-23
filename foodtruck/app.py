@@ -5,15 +5,15 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # ==========================================
-# CONFIGURACIÓN: cambia solo estas 3 líneas
+# CONFIGURACIÓN DEL NEGOCIO
 # ==========================================
-WHATSAPP = "04249367077"          # Número con código de país, sin + ni espacios
-DIRECCION = "Urbanización Manoa, calle Jiraharas"  # Dirección del food truck
-DELIVERY_FEE = 3                   # Precio del delivery en $
+WHATSAPP = "04249367077"
+DIRECCION = "Urbanización Manoa, calle Jiraharas"
+DELIVERY_FEE = 3
 
 st.set_page_config(page_title="Victor's Fast Food", page_icon="🍔", layout="centered")
 
-# Oculta el menú, header y footer de Streamlit para que se vea como app
+# Estilos para ocultar la interfaz por defecto de Streamlit
 st.markdown(
     """<style>
     #MainMenu, header, footer {visibility: hidden;}
@@ -22,7 +22,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Carga el logo (logo.png o logo.jpg) si existe en el repositorio
 base = pathlib.Path(__file__).parent
 logo_file = next((base / n for n in ["logo.png", "logo.jpg", "logo.jpeg"] if (base / n).exists()), None)
 if logo_file:
