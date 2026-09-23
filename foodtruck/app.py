@@ -1,95 +1,16 @@
 import os
 import urllib.parse
 import streamlit as st
-
-# =========================================================
-# DATOS DEL NEGOCIO Y MENÚ (TODO EN UN SOLO ARCHIVO)
-# =========================================================
-NOMBRE_NEGOCIO = "🔥 Victor's Fast Food"
-ESLOGAN = "Las mejores hamburguesas y comida rápida de la ciudad"
-INSTAGRAM = "victorsfastfood"
-WHATSAPP_PHONE = "13051234567"  # Cambia por el número real con código de país
-DELIVERY_FEE = 3.00
-
-DATOS_PAGO = {
-    "pago_movil": {
-        "banco": "Banesco",
-        "telefono": "0414-1234567",
-        "cedula": "V-12345678",
-        "titular": "Victor Fast Food C.A."
-    },
-    "binance": {
-        "email": "pagos@victorsfastfood.com"
-    },
-    "efectivo": {
-        "detalle": "Aceptamos billetes de $ USD en buen estado. Ten el cambio exacto si es posible."
-    }
-}
-
-CATEGORIAS = [
-    {"id": "todos", "nombre": "🍔 Todos"},
-    {"id": "hamburguesas", "nombre": "🍔 Hamburguesas"},
-    {"id": "perros", "nombre": "🌭 Perros Calientes"},
-    {"id": "entradas", "nombre": "🍟 Entradas y Acompañantes"},
-    {"id": "bebidas", "nombre": "🥤 Bebidas"},
-]
-
-MENU_ITEMS = [
-    {
-        "id": "hamb_clasica",
-        "categoria": "hamburguesas",
-        "nombre": "Hamburguesa Clásica",
-        "precio": 8.50,
-        "descripcion": "Carne de res 150g, queso cheddar, lechuga, tomate y salsa de la casa.",
-        "badge": "⭐ Popular",
-        "foto": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"
-    },
-    {
-        "id": "hamb_especial",
-        "categoria": "hamburguesas",
-        "nombre": "Super Victor Burger",
-        "precio": 12.00,
-        "descripcion": "Doble carne, doble tocino, queso fundido, cebolla caramelizada y huevo frito.",
-        "badge": "🔥 Recomendado",
-        "foto": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500"
-    },
-    {
-        "id": "dog_clasico",
-        "categoria": "perros",
-        "nombre": "Hot Dog Tradicional",
-        "precio": 5.00,
-        "descripcion": "Salchicha premium, papitas ralladas, cebolla y trío de salsas.",
-        "badge": "Clásico",
-        "foto": "https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=500"
-    },
-    {
-        "id": "dog_especial",
-        "categoria": "perros",
-        "nombre": "Perro Caliente Especial",
-        "precio": 7.50,
-        "descripcion": "Con tocino crujiente, queso derretido, maíz y salsa tártara.",
-        "badge": "💥 Favorito",
-        "foto": "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?w=500"
-    },
-    {
-        "id": "papas_simples",
-        "categoria": "entradas",
-        "nombre": "Papas Fritas Crujientes",
-        "precio": 4.00,
-        "descripcion": "Papas sazonadas con sal marina y servidas con salsa de ajo.",
-        "badge": "Acompañante",
-        "foto": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500"
-    },
-    {
-        "id": "refresco",
-        "categoria": "bebidas",
-        "nombre": "Soda / Refresco 355ml",
-        "precio": 2.00,
-        "descripcion": "Lata fría (Coca-Cola, Sprite, Fanta).",
-        "badge": "Frío",
-        "foto": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500"
-    }
-]
+from menu_data import (
+    NOMBRE_NEGOCIO,
+    ESLOGAN,
+    INSTAGRAM,
+    WHATSAPP_PHONE,
+    DELIVERY_FEE,
+    DATOS_PAGO,
+    CATEGORIAS,
+    MENU_ITEMS,
+)
 
 # ---------------------------------------------------------
 # 1. CONFIGURACIÓN DE PÁGINA
@@ -157,6 +78,14 @@ st.markdown(
         box-shadow: 0 12px 35px rgba(180, 83, 9, 0.18);
         transition: all 0.3s ease;
     }
+    .hero-container:hover {
+        box-shadow: 0 16px 45px rgba(180, 83, 9, 0.28);
+    }
+
+    .hero-logo-img {
+        animation: floatLogo 4s ease-in-out infinite;
+        filter: drop-shadow(0 8px 15px rgba(0,0,0,0.15));
+    }
 
     .hero-badge-open {
         background: linear-gradient(135deg, #10B981, #059669);
@@ -176,6 +105,7 @@ st.markdown(
         font-weight: 900;
         margin: 0;
         letter-spacing: -0.5px;
+        text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
     }
 
     .hero-subtitle {
@@ -196,6 +126,13 @@ st.markdown(
         font-weight: 700;
         text-decoration: none;
         border: 1px solid #FFE082;
+        transition: all 0.2s ease;
+    }
+    .hero-social-tag:hover {
+        background-color: #E52521;
+        color: #FFFFFF;
+        border-color: #E52521;
+        transform: translateY(-2px);
     }
 
     /* Barra Flotante / Destacada del Carrito Activo */
@@ -213,7 +150,7 @@ st.markdown(
         box-shadow: 0 8px 25px rgba(0,0,0,0.25);
     }
 
-    /* Cards de Productos */
+    /* Cards de Productos (Blancas, modernas y súper animadas) */
     .product-card {
         background: #FFFFFF;
         border-radius: 22px;
@@ -233,17 +170,21 @@ st.markdown(
     .product-img-box {
         position: relative;
         width: 100%;
-        height: 190px;
+        height: 160px;
+        background: radial-gradient(circle, #FFFBEB 0%, #FDE68A 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
+        border-bottom: 2px solid #FFE58F;
     }
-    .product-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
+    .product-emoji {
+        font-size: 75px;
+        transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
     }
-    .product-card:hover .product-img {
-        transform: scale(1.08);
+    .product-card:hover .product-emoji {
+        transform: scale(1.2) rotate(5deg);
     }
 
     .product-badge {
@@ -258,6 +199,7 @@ st.markdown(
         font-weight: 800;
         text-transform: uppercase;
         box-shadow: 0 4px 12px rgba(229, 37, 33, 0.45);
+        letter-spacing: 0.5px;
     }
 
     .cart-active-badge {
@@ -270,6 +212,7 @@ st.markdown(
         border-radius: 14px;
         font-size: 12px;
         font-weight: 800;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         animation: popBadge 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
@@ -285,6 +228,7 @@ st.markdown(
         border-radius: 12px;
         font-size: 18px;
         font-weight: 900;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
     .product-info {
@@ -303,6 +247,7 @@ st.markdown(
         min-height: 48px;
     }
 
+    /* Caja de Pago Informativa en Barra Lateral */
     .payment-info-box {
         background-color: #FFFBEB;
         border: 1px solid #FDE68A;
@@ -315,6 +260,7 @@ st.markdown(
         color: #92400E;
     }
 
+    /* Botón de WhatsApp Gigante Animado */
     .whatsapp-btn {
         display: block;
         width: 100%;
@@ -327,9 +273,16 @@ st.markdown(
         border-radius: 16px;
         text-decoration: none;
         animation: pulseWa 2.5s infinite;
+        transition: all 0.3s ease;
         margin-top: 18px;
     }
+    .whatsapp-btn:hover {
+        background: linear-gradient(135deg, #2EEB72, #15A392);
+        color: #FFFFFF !important;
+        transform: scale(1.03);
+    }
 
+    /* Resumen de totales */
     .summary-card {
         background: #F9FAFB;
         border: 2px solid #E5E7EB;
@@ -356,20 +309,30 @@ st.markdown(
         margin-top: 8px;
     }
 
+    /* Pestañas de Streamlit con Estilo Fast Food */
     div[data-baseweb="tab-list"] {
         background-color: rgba(255, 255, 255, 0.7);
         border-radius: 16px;
         padding: 6px;
         gap: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+    div[data-baseweb="tab"] {
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        color: #4B5563 !important;
+        padding: 8px 16px !important;
     }
     div[aria-selected="true"] {
         background-color: #E52521 !important;
         color: #FFFFFF !important;
     }
 
+    /* Sidebar con fondo blanco suave */
     section[data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 2px solid #FFE082 !important;
+        box-shadow: 5px 0 25px rgba(0,0,0,0.08);
     }
     </style>
     """,
@@ -440,7 +403,7 @@ if total_items_carrito > 0:
                 <span style="font-size:20px;">🛒</span> 
                 <b style="color:#FFFFFF; font-size:16px;">Tu Carrito:</b> 
                 <span style="background:#E52521; color:#fff; font-weight:800; padding:2px 8px; border-radius:10px; margin:0 5px;">
-                    {total_items_carrito} {'platillo' if total_items_carrito == 1 else 'platillos'}
+                    {total_items_carrito} { 'platillo' if total_items_carrito == 1 else 'platillos' }
                 </span>
                 <span style="color:#FFD000; font-weight:800; font-size:16px;">${total_subtotal_carrito:.2f}</span>
             </div>
@@ -478,19 +441,21 @@ for i, tab in enumerate(tabs):
                 precio = item["precio"]
                 desc = item["descripcion"]
                 badge = item["badge"]
-                foto = item["foto"]
+                emoji = item.get("emoji", "🍔")
 
                 item_en_carrito = st.session_state["carrito"].get(item_id, {})
                 cant_actual = item_en_carrito.get("cantidad", 0)
                 notas_actual = item_en_carrito.get("notas", "")
 
+                # Badge visual de si ya está en el carrito
                 cart_badge_html = f'<div class="cart-active-badge">✓ {cant_actual} en orden</div>' if cant_actual > 0 else ''
 
+                # Card HTML
                 st.markdown(
                     f"""
                     <div class="product-card">
                         <div class="product-img-box">
-                            <img src="{foto}" class="product-img" alt="{nombre}">
+                            <div class="product-emoji">{emoji}</div>
                             <div class="product-badge">{badge}</div>
                             {cart_badge_html}
                             <div class="product-price-tag">${precio:.2f}</div>
@@ -504,6 +469,7 @@ for i, tab in enumerate(tabs):
                     unsafe_allow_html=True,
                 )
 
+                # Controles de Cantidad y Personalización
                 c_qty, c_notes = st.columns([1, 2])
                 with c_qty:
                     cant = st.number_input(
@@ -518,7 +484,7 @@ for i, tab in enumerate(tabs):
                     notas = st.text_input(
                         "Personalizar:",
                         value=notas_actual,
-                        placeholder="Ej. Sin cebolla...",
+                        placeholder="Ej. Sin cebolla, tártara...",
                         key=f"notes_{cat_id}_{item_id}",
                     )
 
@@ -527,6 +493,7 @@ for i, tab in enumerate(tabs):
                     st.rerun()
 
                 st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+
 
 # ---------------------------------------------------------
 # 6. BARRA LATERAL (CHECKOUT & CARRITO DE COMPRAS)
@@ -558,6 +525,7 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
     else:
+        # Desglose de ítems
         subtotal_comida = 0.0
         for item_id, datos in list(carrito.items()):
             subtotal_comida += datos["subtotal"]
@@ -580,6 +548,9 @@ with st.sidebar:
 
         st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:15px 0;'>", unsafe_allow_html=True)
 
+        # -------------------------------------------------
+        # MODALIDAD DE ENTREGA
+        # -------------------------------------------------
         st.markdown("<h4 style='color:#111827; margin-bottom:6px; font-size:15px;'>📍 Tipo de Entrega</h4>", unsafe_allow_html=True)
         modalidad = st.radio(
             "Selecciona cómo recibirás tu orden:",
@@ -598,7 +569,7 @@ with st.sidebar:
             costo_delivery = DELIVERY_FEE
             detalle_entrega = st.text_area(
                 "🏠 Dirección exacta y Punto de Referencia:",
-                placeholder="Ej. Calle 5 con Av. Principal, Casa #12",
+                placeholder="Ej. Calle 5 con Av. Principal, Casa #12 (Frente a la panadería)",
                 key="dir_delivery",
             )
         elif "Local" in modalidad:
@@ -612,6 +583,9 @@ with st.sidebar:
 
         st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:15px 0;'>", unsafe_allow_html=True)
 
+        # -------------------------------------------------
+        # MÉTODO DE PAGO
+        # -------------------------------------------------
         st.markdown("<h4 style='color:#111827; margin-bottom:6px; font-size:15px;'>💳 Método de Pago</h4>", unsafe_allow_html=True)
         metodo_pago = st.radio(
             "¿Cómo vas a pagar?",
@@ -633,19 +607,28 @@ with st.sidebar:
                 """,
                 unsafe_allow_html=True,
             )
-            ref_pago = st.text_input("Número de Referencia:", placeholder="Ej. 948210", key="ref_pago_movil")
+            ref_pago = st.text_input(
+                "Número de Referencia (o últimos 4 dígitos):",
+                placeholder="Ej. 948210",
+                key="ref_pago_movil",
+            )
         elif metodo_pago == "🟡 Binance Pay":
             bn = DATOS_PAGO["binance"]
             st.markdown(
                 f"""
                 <div class="payment-info-box">
                     <b>Correo Binance:</b><br>
-                    <code style="color:#B45309; font-weight:700;">{bn['email']}</code>
+                    <code style="color:#B45309; font-weight:700;">{bn['email']}</code><br>
+                    <small>Envía captura o ID de pago por WhatsApp.</small>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-            ref_pago = st.text_input("ID de Transacción / Binance:", placeholder="Ej. Pay ID", key="ref_binance")
+            ref_pago = st.text_input(
+                "ID de Transacción / Usuario Binance:",
+                placeholder="Ej. Pay ID o tu usuario",
+                key="ref_binance",
+            )
         else:
             st.markdown(
                 f"""
@@ -656,14 +639,24 @@ with st.sidebar:
                 """,
                 unsafe_allow_html=True,
             )
-            ref_pago = st.text_input("¿Con cuánto pagas?:", placeholder="Ej. Billete de $20", key="ref_efectivo")
+            ref_pago = st.text_input(
+                "¿Con cuánto pagas? (Para preparar cambio):",
+                placeholder="Ej. Pago con billete de $20 o monto exacto",
+                key="ref_efectivo",
+            )
 
         st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:15px 0;'>", unsafe_allow_html=True)
 
+        # -------------------------------------------------
+        # DATOS DEL CLIENTE
+        # -------------------------------------------------
         st.markdown("<h4 style='color:#111827; margin-bottom:6px; font-size:15px;'>👤 Tus Datos</h4>", unsafe_allow_html=True)
         cliente_nombre = st.text_input("Tu Nombre Completo:", placeholder="Ej. Carlos Hernández", key="cli_nombre")
         cliente_telefono = st.text_input("Tu Teléfono de Contacto:", placeholder="Ej. 0414-1234567", key="cli_telefono")
 
+        # -------------------------------------------------
+        # RESUMEN ECONÓMICO FINAL
+        # -------------------------------------------------
         total_pagar = subtotal_comida + costo_delivery
 
         st.markdown(
@@ -686,6 +679,9 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
+        # -------------------------------------------------
+        # BOTÓN & MENSAJE DE WHATSAPP
+        # -------------------------------------------------
         puede_enviar = True
         error_msg = ""
 
