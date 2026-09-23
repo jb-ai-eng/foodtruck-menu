@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # ==========================================
 # CONFIGURACIÓN DEL NEGOCIO
 # ==========================================
-WHATSAPP = "04249367077"
+WHATSAPP = "584249367077"
 DIRECCION = "Urbanización Manoa, calle Jiraharas"
 DELIVERY_FEE = 3
 
