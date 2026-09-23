@@ -1,732 +1,299 @@
-import os
-import urllib.parse
+import base64
+import pathlib
+
 import streamlit as st
+import streamlit.components.v1 as components
 
-# =========================================================
-# DATOS DEL NEGOCIO Y MENÚ (SISTEMA INDEPENDIENTE)
-# =========================================================
-NOMBRE_NEGOCIO = "🔥 Victor's Fast Food"
-ESLOGAN = "Las mejores hamburguesas y comida rápida de la ciudad"
-INSTAGRAM = "victorsfastfood"
-WHATSAPP_PHONE = "13051234567"  # Cambiar por el número real con código de país
-DELIVERY_FEE = 3.00
+# ==========================================
+# CONFIGURACIÓN: cambia solo estas 3 líneas
+# ==========================================
+WHATSAPP = "58XXXXXXXXXX"          # Número con código de país, sin + ni espacios
+DIRECCION = "Dirección del local"  # Dirección del food truck
+DELIVERY_FEE = 3                   # Precio del delivery en $
 
-DATOS_PAGO = {
-    "pago_movil": {
-        "banco": "Banesco",
-        "telefono": "0414-1234567",
-        "cedula": "V-12345678",
-        "titular": "Victor Fast Food C.A."
-    },
-    "binance": {
-        "email": "pagos@victorsfastfood.com"
-    },
-    "efectivo": {
-        "detalle": "Aceptamos billetes de $ USD en buen estado. Ten el cambio exacto si es posible."
-    }
-}
+st.set_page_config(page_title="Victor's Fast Food", page_icon="🍔", layout="centered")
 
-CATEGORIAS = [
-    {"id": "todos", "nombre": "🍔 Todos"},
-    {"id": "hamburguesas", "nombre": "🍔 Hamburguesas"},
-    {"id": "perros", "nombre": "🌭 Perros Calientes"},
-    {"id": "entradas", "nombre": "🍟 Entradas y Acompañantes"},
-    {"id": "bebidas", "nombre": "🥤 Bebidas"},
-]
-
-MENU_ITEMS = [
-    {
-        "id": "hamb_clasica",
-        "categoria": "hamburguesas",
-        "nombre": "Hamburguesa Clásica",
-        "precio": 8.50,
-        "descripcion": "Carne de res 150g, queso cheddar, lechuga, tomate y salsa de la casa.",
-        "badge": "⭐ Popular",
-        "emoji": "🍔"
-    },
-    {
-        "id": "hamb_especial",
-        "categoria": "hamburguesas",
-        "nombre": "Super Victor Burger",
-        "precio": 12.00,
-        "descripcion": "Doble carne, doble tocino, queso fundido, cebolla caramelizada y huevo frito.",
-        "badge": "🔥 Recomendado",
-        "emoji": "🍔"
-    },
-    {
-        "id": "dog_clasico",
-        "categoria": "perros",
-        "nombre": "Hot Dog Tradicional",
-        "precio": 5.00,
-        "descripcion": "Salchicha premium, papitas ralladas, cebolla y trío de salsas.",
-        "badge": "Clásico",
-        "emoji": "🌭"
-    },
-    {
-        "id": "dog_especial",
-        "categoria": "perros",
-        "nombre": "Perro Caliente Especial",
-        "precio": 7.50,
-        "descripcion": "Con tocino crujiente, queso derretido, maíz y salsa tártara.",
-        "badge": "💥 Favorito",
-        "emoji": "🌭"
-    },
-    {
-        "id": "papas_simples",
-        "categoria": "entradas",
-        "nombre": "Papas Fritas Crujientes",
-        "precio": 4.00,
-        "descripcion": "Papas sazonadas con sal marina y servidas con salsa de ajo.",
-        "badge": "Acompañante",
-        "emoji": "🍟"
-    },
-    {
-        "id": "refresco",
-        "categoria": "bebidas",
-        "nombre": "Soda / Refresco 355ml",
-        "precio": 2.00,
-        "descripcion": "Lata fría (Coca-Cola, Sprite, Fanta).",
-        "badge": "Frío",
-        "emoji": "🥤"
-    }
-]
-
-# ---------------------------------------------------------
-# 1. CONFIGURACIÓN DE PÁGINA
-# ---------------------------------------------------------
-st.set_page_config(
-    page_title=f"{NOMBRE_NEGOCIO} | Menú Digital & Pedidos",
-    page_icon="🍔",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# ---------------------------------------------------------
-# 2. ESTILOS CSS PERSONALIZADOS (FONDO AMARILLO ANIMADO & CARDS BLANCAS)
-# ---------------------------------------------------------
+# Oculta el menú, header y footer de Streamlit para que se vea como app
 st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Poppins', sans-serif;
-    }
-
-    /* Fondo general: Amarillo cálido y vibrante Street Food */
-    .stApp {
-        background: linear-gradient(135deg, #FFDE59 0%, #FFC107 50%, #FFA000 100%) !important;
-        background-attachment: fixed !important;
-        color: #1F2937;
-    }
-
-    /* Ocultar barra superior y pie por defecto */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    /* Animaciones Clave */
-    @keyframes pulseGlow {
-        0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 37, 33, 0.35); }
-        50% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(229, 37, 33, 0.6); }
-    }
-
-    @keyframes pulseWa {
-        0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4); }
-        50% { transform: scale(1.03); box-shadow: 0 10px 30px rgba(37, 211, 102, 0.7); }
-    }
-
-    @keyframes popBadge {
-        0% { transform: scale(0.85); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-    }
-
-    .hero-badge-open {
-        background: linear-gradient(135deg, #10B981, #059669);
-        color: #FFFFFF;
-        font-size: 13px;
-        font-weight: 700;
-        padding: 6px 16px;
-        border-radius: 30px;
-        display: inline-block;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-    }
-
-    .hero-title {
-        color: #E52521;
-        font-size: 34px;
-        font-weight: 900;
-        margin: 0;
-        letter-spacing: -0.5px;
-    }
-
-    .hero-subtitle {
-        color: #4B5563;
-        font-size: 15px;
-        margin-top: 4px;
-        font-weight: 500;
-    }
-
-    .hero-social-tag {
-        display: inline-flex;
-        align-items: center;
-        background-color: #FFF3CD;
-        color: #B45309;
-        padding: 6px 14px;
-        border-radius: 30px;
-        font-size: 13px;
-        font-weight: 700;
-        text-decoration: none;
-        border: 1px solid #FFE082;
-    }
-
-    /* Barra Flotante / Destacada del Carrito Activo */
-    .cart-alert-bar {
-        background: #1F2937;
-        color: #FFD000;
-        padding: 14px 20px;
-        border-radius: 16px;
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 2px solid #FFD000;
-        animation: pulseGlow 3s infinite;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-    }
-
-    /* Cards de Productos */
-    .product-card {
-        background: #FFFFFF;
-        border-radius: 22px;
-        border: 2px solid #FFE58F;
-        overflow: hidden;
-        margin-bottom: 15px;
-        box-shadow: 0 10px 25px rgba(180, 83, 9, 0.12);
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        position: relative;
-    }
-    .product-card:hover {
-        transform: translateY(-8px) scale(1.015);
-        border-color: #E52521;
-        box-shadow: 0 18px 40px rgba(229, 37, 33, 0.22);
-    }
-
-    .product-img-box {
-        position: relative;
-        width: 100%;
-        height: 160px;
-        background: radial-gradient(circle, #FFFBEB 0%, #FDE68A 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        border-bottom: 2px solid #FFE58F;
-    }
-    .product-emoji {
-        font-size: 75px;
-        transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
-    }
-    .product-card:hover .product-emoji {
-        transform: scale(1.2) rotate(5deg);
-    }
-
-    .product-badge {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        background: linear-gradient(135deg, #E52521, #FF5722);
-        color: white;
-        padding: 5px 12px;
-        border-radius: 14px;
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        box-shadow: 0 4px 12px rgba(229, 37, 33, 0.45);
-    }
-
-    .cart-active-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: linear-gradient(135deg, #10B981, #059669);
-        color: white;
-        padding: 5px 12px;
-        border-radius: 14px;
-        font-size: 12px;
-        font-weight: 800;
-        animation: popBadge 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .product-price-tag {
-        position: absolute;
-        bottom: 12px;
-        right: 12px;
-        background: rgba(31, 41, 55, 0.92);
-        backdrop-filter: blur(6px);
-        border: 2px solid #FFC700;
-        color: #FFC700;
-        padding: 5px 14px;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: 900;
-    }
-
-    .product-info {
-        padding: 16px 18px;
-    }
-    .product-name {
-        color: #111827;
-        font-size: 19px;
-        font-weight: 800;
-        margin-bottom: 6px;
-    }
-    .product-desc {
-        color: #4B5563;
-        font-size: 13px;
-        line-height: 1.5;
-        min-height: 48px;
-    }
-
-    .payment-info-box {
-        background-color: #FFFBEB;
-        border: 1px solid #FDE68A;
-        border-left: 5px solid #F59E0B;
-        padding: 12px 14px;
-        border-radius: 10px;
-        margin-top: 10px;
-        margin-bottom: 15px;
-        font-size: 13px;
-        color: #92400E;
-    }
-
-    .whatsapp-btn {
-        display: block;
-        width: 100%;
-        background: linear-gradient(135deg, #25D366, #128C7E);
-        color: #FFFFFF !important;
-        text-align: center;
-        padding: 16px 20px;
-        font-size: 19px;
-        font-weight: 800;
-        border-radius: 16px;
-        text-decoration: none;
-        animation: pulseWa 2.5s infinite;
-        margin-top: 18px;
-    }
-
-    .summary-card {
-        background: #F9FAFB;
-        border: 2px solid #E5E7EB;
-        border-radius: 16px;
-        padding: 16px;
-        margin-top: 15px;
-    }
-    .summary-line {
-        display: flex;
-        justify-content: space-between;
-        font-size: 14px;
-        margin-bottom: 6px;
-        color: #4B5563;
-        font-weight: 500;
-    }
-    .summary-total {
-        display: flex;
-        justify-content: space-between;
-        font-size: 20px;
-        font-weight: 900;
-        color: #E52521;
-        border-top: 2px dashed #D1D5DB;
-        padding-top: 10px;
-        margin-top: 8px;
-    }
-
-    div[data-baseweb="tab-list"] {
-        background-color: rgba(255, 255, 255, 0.7);
-        border-radius: 16px;
-        padding: 6px;
-        gap: 8px;
-    }
-    div[aria-selected="true"] {
-        background-color: #E52521 !important;
-        color: #FFFFFF !important;
-    }
-
-    section[data-testid="stSidebar"] {
-        background-color: #FFFFFF !important;
-        border-right: 2px solid #FFE082 !important;
-    }
-    </style>
-    """,
+    """<style>
+    #MainMenu, header, footer {visibility: hidden;}
+    .block-container {padding-top: 0.5rem; padding-bottom: 0; max-width: 720px;}
+    </style>""",
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------
-# 3. GESTIÓN DEL ESTADO (CARRITO)
-# ---------------------------------------------------------
-if "carrito" not in st.session_state:
-    st.session_state["carrito"] = {}
+# Carga el logo si existe logo.png en el repositorio
+logo_path = pathlib.Path(__file__).parent / "logo.png"
+if logo_path.exists():
+    logo_b64 = base64.b64encode(logo_path.read_bytes()).decode()
+    logo_html = f'<div class="logo"><img src="data:image/png;base64,{logo_b64}" alt="Logo"></div>'
+else:
+    logo_html = '<div class="logo">🍔</div>'
 
-def actualizar_carrito(item_id, item_nombre, item_precio, cantidad, notas):
-    if cantidad > 0:
-        st.session_state["carrito"][item_id] = {
-            "nombre": item_nombre,
-            "precio": item_precio,
-            "cantidad": cantidad,
-            "subtotal": cantidad * item_precio,
-            "notas": notas.strip() if notas else "",
-        }
-    else:
-        if item_id in st.session_state["carrito"]:
-            del st.session_state["carrito"][item_id]
+HTML = r"""
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF8F1;--card:#FFFFFF;--soft:#FCEFE4;--acc:#E07A5F;--acc2:#F2CC8F;--txt:#3D2C29;--mut:#8A7470;--line:#EFE1D6}
+*{box-sizing:border-box}
+body{margin:0;font-family:Poppins,sans-serif;background:var(--bg);color:var(--txt)}
+.wrap{max-width:680px;margin:0 auto;padding:12px 12px 40px}
+.hero{background:var(--soft);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center}
+.logo{width:70px;height:70px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:36px;flex:none;overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:cover}
+h1{margin:0;font-size:22px}
+.sub{margin:2px 0 0;font-size:13px;color:var(--mut)}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:14px 0 10px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;white-space:nowrap;cursor:pointer;color:var(--txt)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.row{display:flex;gap:12px;align-items:flex-start}
+.emo{font-size:28px;width:48px;height:48px;border-radius:12px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
+.name{margin:0;font-weight:600;font-size:15px}
+.desc{margin:3px 0 0;font-size:12.5px;color:var(--mut);line-height:1.5}
+.price{font-weight:600;color:var(--acc);font-size:16px;white-space:nowrap}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--txt)}
+.btn.add{background:var(--acc);border-color:var(--acc);color:#fff;margin-top:6px}
+.opt{background:var(--soft);border-radius:12px;padding:12px;margin-top:12px}
+.lbl{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+input[type=text],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:14px;background:#fff;color:var(--txt)}
+.ck{display:inline-flex;align-items:center;gap:5px;font-size:13px;margin:4px 12px 4px 0}
+.seg{display:flex;gap:8px}.seg .btn{flex:1;padding:11px}
+.seg .btn.on{background:var(--acc2);border-color:var(--acc2);font-weight:600}
+.line{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.q{width:30px;height:30px;padding:0;border-radius:50%}
+.tot{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:4px}
+.big{font-size:20px;font-weight:600;color:var(--txt)}
+.send{width:100%;background:#25D366;border:none;color:#fff;border-radius:14px;padding:14px;font:inherit;font-weight:600;font-size:16px;margin-top:10px;cursor:pointer}
+.err{color:#C0392B;font-size:13px;margin:8px 0 0;min-height:1em}
+.bar{position:sticky;bottom:10px;background:var(--txt);color:#fff;border-radius:14px;padding:13px 16px;display:none;justify-content:space-between;cursor:pointer;margin-top:10px;font-weight:500}
+.pay{background:var(--soft);border-radius:12px;padding:12px;font-size:13px;line-height:1.7;margin-top:10px}
+pre{white-space:pre-wrap;font-size:12px;margin:0;font-family:inherit}
+a.wa{display:block;text-align:center;margin-top:10px;color:#1a9e4b;font-weight:600}
+</style>
 
-# ---------------------------------------------------------
-# 4. HERO HEADER CON LOGO OFICIAL
-# ---------------------------------------------------------
-logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+<div class="wrap">
+  <div class="hero">
+    __LOGO__
+    <div>
+      <h1>Victor's Fast Food</h1>
+      <p class="sub">📸 @victorsfast_food</p>
+      <p class="sub">📍 __DIR__</p>
+      <p class="sub">🛵 Delivery $__FEE__</p>
+    </div>
+  </div>
 
-with st.container():
-    col_logo, col_info = st.columns([1, 4])
-    with col_logo:
-        if os.path.exists(logo_path):
-            st.image(logo_path, use_container_width=True)
-        else:
-            st.markdown("<div style='font-size:64px; text-align:center;'>🍔</div>", unsafe_allow_html=True)
+  <div class="cats" id="cats"></div>
+  <div id="list"></div>
+  <div class="bar" id="bar" onclick="document.getElementById('cartbox').scrollIntoView({behavior:'smooth'})"></div>
 
-    with col_info:
-        st.markdown(
-            f"""
-            <div style="padding-top: 5px;">
-                <div class="hero-badge-open">🟢 ABIERTO • TOMANDO PEDIDOS</div>
-                <h1 class="hero-title">{NOMBRE_NEGOCIO}</h1>
-                <p class="hero-subtitle">{ESLOGAN}</p>
-                <div style="margin-top: 8px;">
-                    <a class="hero-social-tag" href="https://instagram.com/{INSTAGRAM}" target="_blank">
-                        📸 Instagram: @{INSTAGRAM}
-                    </a>
-                    <span style="color:#6B7280; font-size:13px; font-weight:600; margin-left:12px;">
-                        🛵 Delivery directo (+${DELIVERY_FEE:.2f}) | 🏃 Pick-Up / Mesa
-                    </span>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+  <div class="card" id="cartbox" style="margin-top:16px">
+    <p class="name" style="font-size:18px">🛒 Tu pedido</p>
+    <div id="cart"></div>
 
-# Barra de estado si hay ítems en el carrito
-total_items_carrito = sum(d["cantidad"] for d in st.session_state["carrito"].values())
-total_subtotal_carrito = sum(d["subtotal"] for d in st.session_state["carrito"].values())
+    <span class="lbl">Tipo de entrega</span>
+    <div class="seg">
+      <button class="btn on" id="m_d" onclick="setMode('d')">🛵 Delivery +$__FEE__</button>
+      <button class="btn" id="m_r" onclick="setMode('r')">🏪 Retiro en local</button>
+    </div>
 
-if total_items_carrito > 0:
-    st.markdown(
-        f"""
-        <div class="cart-alert-bar">
-            <div>
-                <span style="font-size:20px;">🛒</span> 
-                <b style="color:#FFFFFF; font-size:16px;">Tu Carrito:</b> 
-                <span style="background:#E52521; color:#fff; font-weight:800; padding:2px 8px; border-radius:10px; margin:0 5px;">
-                    {total_items_carrito} {'platillo' if total_items_carrito == 1 else 'platillos'}
-                </span>
-                <span style="color:#FFD000; font-weight:800; font-size:16px;">${total_subtotal_carrito:.2f}</span>
-            </div>
-            <div style="font-size:13px; font-weight:700; color:#FFFFFF;">
-                👉 Revisa y envía en la barra lateral
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    <span class="lbl">👤 Tu nombre</span>
+    <input type="text" id="f_n" placeholder="María Pérez" oninput="clr()">
+    <span class="lbl">📞 Tu teléfono</span>
+    <input type="text" id="f_t" placeholder="0414 1234567" oninput="clr()">
+    <div id="adwrap">
+      <span class="lbl">📍 Dirección de entrega</span>
+      <input type="text" id="f_a" placeholder="Calle, casa, punto de referencia" oninput="clr()">
+    </div>
 
-st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+    <span class="lbl">💳 Método de pago</span>
+    <div class="seg">
+      <button class="btn" id="p_pm" onclick="setPay('pm')">📱 Pago móvil</button>
+      <button class="btn" id="p_bn" onclick="setPay('bn')">🪙 Binance</button>
+    </div>
+    <div id="payinfo"></div>
 
-# ---------------------------------------------------------
-# 5. PESTAÑAS DEL MENÚ POR CATEGORÍAS
-# ---------------------------------------------------------
-nombres_tabs = [cat["nombre"] for cat in CATEGORIAS]
-tabs = st.tabs(nombres_tabs)
+    <div id="tot" style="margin-top:14px"></div>
+    <p class="err" id="err"></p>
+    <button class="send" onclick="send()">💬 Enviar pedido por WhatsApp</button>
+    <div id="prev"></div>
+  </div>
+</div>
 
-for i, tab in enumerate(tabs):
-    cat_id = CATEGORIAS[i]["id"]
-    with tab:
-        if cat_id == "todos":
-            items_a_mostrar = MENU_ITEMS
-        else:
-            items_a_mostrar = [item for item in MENU_ITEMS if item["categoria"] == cat_id]
+<script>
+const WA = "__WA__";
+const FEE = Number("__FEE__");
+const CATS = [["Todos","📋"],["Perros","🌭"],["Hamburguesas","🍔"],["Enrollados","🌯"],["Especiales","🥪"],["Extras","🍟"],["Bebidas","🥤"]];
+const EMO = {Perros:"🌭",Hamburguesas:"🍔",Enrollados:"🌯",Especiales:"🥪",Extras:"🍟",Bebidas:"🥤"};
+const M = [
+["Perro Pequeño",2.5,"Pan pequeño, salchicha nacional, lechuga, tomate, cebolla, queso amarillo, papitas y salsa","Perros"],
+["Perro Sencillo",3.5,"Pan grande, salchicha nacional, lechuga, tomate, cebolla, queso amarillo, papitas y salsa","Perros"],
+["Perro Especial",5,"Pan grande, salchicha nacional, lechuga, tomate, cebolla, jamón, queso amarillo, tocineta y huevo","Perros"],
+["Perro Polaco",8,"Pan grande, salchicha polaca, lechuga, tomate, cebolla, jamón, queso amarillo, tocineta y huevo","Perros"],
+["Hamburguesa Sencilla",6,"Pan, carne, lechuga, tomate, cebolla, papitas, queso amarillo","Hamburguesas"],
+["Hamburguesa de Carne",8,"Pan, carne, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
+["Hamburguesa de Pollo",8,"Pan, pollo pechuga, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
+["Hamburguesa Chuleta",8,"Pan, chuleta ahumada, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
+["Hamburguesa Doble o Mixta",15,"Pan, dos proteínas de preferencia, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
+["Hamburguesa Crispy",null,"Pollo frito empanizado, lechuga, tomate, cebolla, tocineta, jamón, queso amarillo y papitas fritas","Hamburguesas"],
+["Enrollado Carne",20,"Carne, jamón, queso, tocineta, lechuga, tomate, cebolla, papitas y huevo","Enrollados"],
+["Enrollado Pollo",20,"Pollo, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas","Enrollados"],
+["Enrollado Mixto",20,"Carne y pollo, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas","Enrollados"],
+["Pepito Mixto",25,"Carne y pollo, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas","Enrollados"],
+["Mini Pepito",10,"Carne, vegetales, papita, tocineta y queso amarillo","Enrollados"],
+["Salchipapa",15,"","Especiales"],
+["Sandwich Granjero",null,"Pan tipo granjero, lechuga, tomate, cebolla, pollo, queso amarillo y papitas fritas","Especiales"],
+["Club House",12,"Pollo, lechuga, tomate, cebolla, jamón, huevo, queso amarillo y papas fritas","Especiales"],
+["Ración Papa 500gr",5,"","Extras"],
+["Ración Papa 250gr",2.5,"","Extras"],
+["Ración Tequeños",null,"","Extras"],
+["Nestea",2,"","Bebidas"],
+["Refresco Botellita",1,"","Bebidas"],
+["Refresco 1.0L",2,"","Bebidas"]
+];
+const RM = ["lechuga","tomate","cebolla","salsa","papitas","huevo","tocineta","jamón","queso","vegetales"];
+let cat = "Todos", open = null, cart = [], mode = "d", pay = "";
 
-        col_left, col_right = st.columns(2)
-        for idx, item in enumerate(items_a_mostrar):
-            col_target = col_left if idx % 2 == 0 else col_right
+const money = n => n == null ? "Consultar" : "$" + n.toFixed(2);
+const custom = i => M[i][2] && ["Perros","Hamburguesas","Enrollados","Especiales"].includes(M[i][3]);
+const $ = id => document.getElementById(id);
 
-            with col_target:
-                item_id = item["id"]
-                nombre = item["nombre"]
-                precio = item["precio"]
-                desc = item["descripcion"]
-                badge = item["badge"]
-                emoji = item.get("emoji", "🍔")
+function rCats(){
+  $("cats").innerHTML = CATS.map(c => `<button class="chip ${c[0]==cat?"on":""}" onclick="setCat('${c[0]}')">${c[1]} ${c[0]}</button>`).join("");
+}
+function setCat(c){ cat = c; open = null; rCats(); rList(); }
 
-                item_en_carrito = st.session_state["carrito"].get(item_id, {})
-                cant_actual = item_en_carrito.get("cantidad", 0)
-                notas_actual = item_en_carrito.get("notas", "")
+function rList(){
+  let h = "";
+  M.forEach((m, i) => {
+    if (cat != "Todos" && m[3] != cat) return;
+    h += `<div class="card"><div class="row">
+      <div class="emo">${EMO[m[3]]}</div>
+      <div style="flex:1;min-width:0"><p class="name">${m[0]}</p>${m[2] ? `<p class="desc">${m[2]}</p>` : ""}</div>
+      <div style="text-align:right"><div class="price">${money(m[1])}</div>
+      <button class="btn add" onclick="tap(${i})">➕ Agregar</button></div></div>`;
+    if (open === i){
+      const d = m[2].toLowerCase();
+      const opts = RM.filter(r => d.includes(r));
+      h += `<div class="opt"><p class="name" style="font-size:14px">✨ ¿Cómo lo quieres?</p>`;
+      if (m[0].includes("Doble")) h += `<span class="lbl">🥩 Elige tus 2 proteínas</span><div class="seg">
+        <select id="p1"><option>Carne</option><option>Pollo</option><option>Chuleta</option></select>
+        <select id="p2"><option>Carne</option><option selected>Pollo</option><option>Chuleta</option></select></div>`;
+      if (opts.length) h += `<span class="lbl">❌ Quitar ingredientes</span>` + opts.map(o => `<label class="ck"><input type="checkbox" class="sx" value="${o}"> Sin ${o}</label>`).join("");
+      h += `<span class="lbl">📝 Nota especial</span><input type="text" id="nt" placeholder="Bien tostado, salsa aparte...">
+        <div class="seg" style="margin-top:10px"><button class="btn" onclick="open=null;rList()">Cancelar</button>
+        <button class="btn add" style="margin-top:0" onclick="add(${i})">Añadir al carrito</button></div></div>`;
+    }
+    h += `</div>`;
+  });
+  $("list").innerHTML = h;
+}
 
-                cart_badge_html = f'<div class="cart-active-badge">✓ {cant_actual} en orden</div>' if cant_actual > 0 else ''
+function tap(i){ if (custom(i)){ open = open === i ? null : i; rList(); } else add(i); }
 
-                st.markdown(
-                    f"""
-                    <div class="product-card">
-                        <div class="product-img-box">
-                            <div class="product-emoji">{emoji}</div>
-                            <div class="product-badge">{badge}</div>
-                            {cart_badge_html}
-                            <div class="product-price-tag">${precio:.2f}</div>
-                        </div>
-                        <div class="product-info">
-                            <div class="product-name">{nombre}</div>
-                            <div class="product-desc">{desc}</div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+function add(i){
+  let sin = [], prot = null, note = "";
+  if (open === i){
+    sin = [...document.querySelectorAll(".sx:checked")].map(x => x.value);
+    if ($("p1")) prot = $("p1").value + " + " + $("p2").value;
+    note = $("nt").value.trim();
+  }
+  const key = JSON.stringify([i, sin, prot, note]);
+  const ex = cart.find(c => c.k == key);
+  if (ex) ex.q++; else cart.push({k:key, i, q:1, sin, prot, note});
+  open = null; rList(); rCart(); clr();
+}
 
-                c_qty, c_notes = st.columns([1, 2])
-                with c_qty:
-                    cant = st.number_input(
-                        "Cantidad:",
-                        min_value=0,
-                        max_value=20,
-                        value=cant_actual,
-                        step=1,
-                        key=f"qty_{cat_id}_{item_id}",
-                    )
-                with c_notes:
-                    notas = st.text_input(
-                        "Personalizar:",
-                        value=notas_actual,
-                        placeholder="Ej. Sin cebolla...",
-                        key=f"notes_{cat_id}_{item_id}",
-                    )
+function qty(n, d){ cart[n].q += d; if (cart[n].q < 1) cart.splice(n, 1); rCart(); }
+const sub = () => cart.reduce((s, c) => s + (M[c.i][1] || 0) * c.q, 0);
 
-                if cant != cant_actual or notas != notas_actual:
-                    actualizar_carrito(item_id, nombre, precio, cant, notas)
-                    st.rerun()
+function rCart(){
+  const count = cart.reduce((s, c) => s + c.q, 0);
+  const s = sub(), fee = mode == "d" && cart.length ? FEE : 0;
+  $("bar").style.display = count ? "flex" : "none";
+  $("bar").innerHTML = `<span>🛒 Ver carrito (${count})</span><span>$${(s + fee).toFixed(2)}</span>`;
+  $("cart").innerHTML = !cart.length ? `<p class="desc">Agrega algo rico del menú para empezar 😋</p>` :
+    cart.map((c, n) => {
+      const m = M[c.i];
+      const det = [c.prot ? "Proteínas: " + c.prot : "", ...c.sin.map(x => "Sin " + x), c.note ? "Nota: " + c.note : ""].filter(Boolean).join(" · ");
+      return `<div class="line"><div style="flex:1;min-width:0"><p class="name" style="font-size:14px">${EMO[m[3]]} ${m[0]}</p>${det ? `<p class="desc">${det}</p>` : ""}</div>
+        <button class="btn q" onclick="qty(${n},-1)">−</button><b>${c.q}</b><button class="btn q" onclick="qty(${n},1)">+</button>
+        <span style="min-width:64px;text-align:right">${m[1] == null ? "Consultar" : "$" + (m[1] * c.q).toFixed(2)}</span></div>`;
+    }).join("");
+  const pend = cart.some(c => M[c.i][1] == null);
+  $("tot").innerHTML = `<div class="tot"><span>Subtotal</span><span>$${s.toFixed(2)}</span></div>
+    <div class="tot"><span>Delivery</span><span>$${fee.toFixed(2)}</span></div>
+    <div class="tot big"><span>Total</span><span>$${(s + fee).toFixed(2)}</span></div>
+    ${pend ? `<p class="desc">⚠️ Algunos productos tienen precio por confirmar.</p>` : ""}`;
+}
 
-                st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+function setMode(m){
+  mode = m;
+  $("m_d").className = "btn" + (m == "d" ? " on" : "");
+  $("m_r").className = "btn" + (m == "r" ? " on" : "");
+  $("adwrap").style.display = m == "d" ? "block" : "none";
+  rCart(); clr();
+}
 
-# ---------------------------------------------------------
-# 6. BARRA LATERAL (CHECKOUT & CARRITO DE COMPRAS)
-# ---------------------------------------------------------
-with st.sidebar:
-    st.markdown(
-        """
-        <div style="text-align:center; padding:10px 0;">
-            <div style="font-size:36px;">🛒</div>
-            <h2 style="color:#E52521; margin:0; font-size:24px; font-weight:900;">Tu Pedido</h2>
-            <p style="color:#6B7280; font-size:13px; margin:2px 0 0 0;">Revisa tus platillos y confirma</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.markdown("<hr style='border:none; border-top:2px dashed #E5E7EB; margin:12px 0;'>", unsafe_allow_html=True)
+function setPay(p){
+  pay = p;
+  $("p_pm").className = "btn" + (p == "pm" ? " on" : "");
+  $("p_bn").className = "btn" + (p == "bn" ? " on" : "");
+  $("payinfo").innerHTML = p == "pm"
+    ? `<div class="pay"><b>📱 Pago móvil · Banesco</b><br>Teléfono: 04249367077<br>Cédula: 20505294</div>`
+    : `<div class="pay"><b>🪙 Binance</b><br>Hugo_victor_17@hotmail.com</div>`;
+  clr();
+}
 
-    carrito = st.session_state["carrito"]
+function clr(){ $("err").textContent = ""; }
 
-    if not carrito:
-        st.markdown(
-            """
-            <div style="text-align:center; padding: 40px 10px; color:#9CA3AF;">
-                <div style="font-size:48px;">🍔🌭🍟</div>
-                <p style="margin-top:12px; font-weight:700; font-size:15px; color:#374151;">¡Tu carrito está vacío!</p>
-                <p style="font-size:13px;">Elige tus platillos favoritos en el menú para armar tu orden.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        subtotal_comida = 0.0
-        for item_id, datos in list(carrito.items()):
-            subtotal_comida += datos["subtotal"]
-            st.markdown(
-                f"""
-                <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:12px; padding:10px 12px; margin-bottom:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:700; color:#111827; font-size:14px;">{datos['cantidad']}x {datos['nombre']}</span>
-                        <span style="color:#E52521; font-weight:800; font-size:14px;">${datos['subtotal']:.2f}</span>
-                    </div>
-                    {f'<div style="color:#6B7280; font-size:11px; margin-top:3px; font-style:italic;">📝 {datos["notas"]}</div>' if datos['notas'] else ''}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+function send(){
+  const n = $("f_n").value.trim(), t = $("f_t").value.trim(), a = $("f_a").value.trim(), e = $("err");
+  if (!cart.length) return e.textContent = "Agrega al menos un producto.";
+  if (!n) return e.textContent = "Escribe tu nombre.";
+  if (!t) return e.textContent = "Escribe tu teléfono.";
+  if (mode == "d" && !a) return e.textContent = "Escribe la dirección de entrega.";
+  if (!pay) return e.textContent = "Elige un método de pago.";
 
-        if st.button("🗑️ Vaciar Carrito", use_container_width=True):
-            st.session_state["carrito"] = {}
-            st.rerun()
+  const id = Math.floor(1000 + Math.random() * 9000), s = sub(), fee = mode == "d" ? FEE : 0;
+  const L = [
+    "🍔 *VICTOR'S FAST FOOD* 🌭",
+    "🧾 *Pedido #" + id + "*",
+    "━━━━━━━━━━━━━━",
+    "👤 *Cliente:* " + n,
+    "📞 *Teléfono:* " + t,
+    mode == "d" ? "🛵 *Entrega:* Delivery\n📍 *Dirección:* " + a : "🏪 *Entrega:* Retiro en el local",
+    "━━━━━━━━━━━━━━"
+  ];
+  cart.forEach(c => {
+    const m = M[c.i];
+    L.push(EMO[m[3]] + " *" + c.q + "x " + m[0] + "* — " + (m[1] == null ? "Precio a consultar" : "$" + (m[1] * c.q).toFixed(2)));
+    if (c.prot) L.push("   🥩 Proteínas: " + c.prot);
+    c.sin.forEach(x => L.push("   ❌ Sin " + x));
+    if (c.note) L.push("   📝 " + c.note);
+  });
+  L.push("━━━━━━━━━━━━━━", "💵 Subtotal: $" + s.toFixed(2), "🛵 Delivery: $" + fee.toFixed(2), "💰 *TOTAL: $" + (s + fee).toFixed(2) + "*");
+  if (cart.some(c => M[c.i][1] == null)) L.push("⚠️ Incluye productos con precio por confirmar");
+  L.push("━━━━━━━━━━━━━━",
+    pay == "pm" ? "💳 *Pago:* Pago móvil Banesco\n04249367077 · CI 20505294" : "💳 *Pago:* Binance\nHugo_victor_17@hotmail.com",
+    "📸 Enviaré el comprobante de pago por aquí.");
 
-        st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:15px 0;'>", unsafe_allow_html=True)
+  const msg = L.join("\n");
+  const url = "https://wa.me/" + WA + "?text=" + encodeURIComponent(msg);
+  $("prev").innerHTML = `<div class="pay"><b>🧾 Tu ticket</b><pre>${msg.replace(/</g, "&lt;")}</pre></div>
+    <a class="wa" href="${url}" target="_blank">Si WhatsApp no se abrió, toca aquí 💬</a>`;
+  if (WA.includes("X")) return e.textContent = "Falta configurar el número de WhatsApp del local.";
+  window.open(url, "_blank");
+}
 
-        st.markdown("<h4 style='color:#111827; margin-bottom:6px; font-size:15px;'>📍 Tipo de Entrega</h4>", unsafe_allow_html=True)
-        modalidad = st.radio(
-            "Selecciona cómo recibirás tu orden:",
-            [
-                f"🛵 Delivery a domicilio (+${DELIVERY_FEE:.2f})",
-                "🏃 Para Llevar (Pick-Up)",
-                "🍽️ Comer en el Local / Mesa",
-            ],
-            key="tipo_entrega",
-        )
+rCats(); rList(); rCart();
+</script>
+"""
 
-        costo_delivery = 0.0
-        detalle_entrega = ""
+html = (
+    HTML.replace("__WA__", WHATSAPP)
+    .replace("__DIR__", DIRECCION)
+    .replace("__FEE__", str(DELIVERY_FEE))
+    .replace("__LOGO__", logo_html)
+)
 
-        if "Delivery" in modalidad:
-            costo_delivery = DELIVERY_FEE
-            detalle_entrega = st.text_area(
-                "🏠 Dirección exacta y Punto de Referencia:",
-                placeholder="Ej. Calle 5 con Av. Principal, Casa #12",
-                key="dir_delivery",
-            )
-        elif "Local" in modalidad:
-            detalle_entrega = st.text_input(
-                "Número de Mesa:",
-                placeholder="Ej. Mesa 4",
-                key="num_mesa",
-            )
-        else:
-            detalle_entrega = "Retiro en Food Truck (Para Llevar)"
-
-        st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:15px 0;'>", unsafe_allow_html=True)
-
-        st.markdown("<h4 style='color:#111827; margin-bottom:6px; font-size:15px;'>💳 Método de Pago</h4>", unsafe_allow_html=True)
-        metodo_pago = st.radio(
-            "¿Cómo vas a pagar?",
-            ["📱 Pago Móvil", "🟡 Binance Pay", "💵 Efectivo ($ USD)"],
-            key="metodo_pago",
-        )
-
-        ref_pago = ""
-        if metodo_pago == "📱 Pago Móvil":
-            pm = DATOS_PAGO["pago_movil"]
-            st.markdown(
-                f"""
-                <div class="payment-info-box">
-                    <b>Banco:</b> {pm['banco']}<br>
-                    <b>Teléfono:</b> <code style="color:#B45309; font-weight:700;">{pm['telefono']}</code><br>
-                    <b>Cédula:</b> <code style="color:#B45309; font-weight:700;">{pm['cedula']}</code><br>
-                    <b>Titular:</b> {pm['titular']}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            ref_pago = st.text_input("Número de Referencia:", placeholder="Ej. 948210", key="ref_pago_movil")
-        elif metodo_pago == "🟡 Binance Pay":
-            bn = DATOS_PAGO["binance"]
-            st.markdown(
-                f"""
-                <div class="payment-info-box">
-                    <b>Correo Binance:</b><br>
-                    <code style="color:#B45309; font-weight:700;">{bn['email']}</code>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            ref_pago = st.text_input("ID de Transacción / Binance:", placeholder="Ej. Pay ID", key="ref_binance")
-        else:
-            st.markdown(
-                f"""
-                <div class="payment-info-box">
-                    <b>Efectivo ($ USD):</b><br>
-                    {DATOS_PAGO['efectivo']['detalle']}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            ref_pago = st.text_input("¿Con cuánto pagas?:", placeholder="Ej. Billete de $20", key="ref_efectivo")
-
-        st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:15px 0;'>", unsafe_allow_html=True)
-
-        st.markdown("<h4 style='color:#111827; margin-bottom:6px; font-size:15px;'>👤 Tus Datos</h4>", unsafe_allow_html=True)
-        cliente_nombre = st.text_input("Tu Nombre Completo:", placeholder="Ej. Carlos Hernández", key="cli_nombre")
-        cliente_telefono = st.text_input("Tu Teléfono de Contacto:", placeholder="Ej. 0414-1234567", key="cli_telefono")
-
-        total_pagar = subtotal_comida + costo_delivery
-
-        st.markdown(
-            f"""
-            <div class="summary-card">
-                <div class="summary-line">
-                    <span>Subtotal Platillos:</span>
-                    <span>${subtotal_comida:.2f}</span>
-                </div>
-                <div class="summary-line">
-                    <span>Costo Delivery:</span>
-                    <span>{f"+${costo_delivery:.2f}" if costo_delivery > 0 else "Gratis ($0.00)"}</span>
-                </div>
-                <div class="summary-total">
-                    <span>TOTAL A PAGAR:</span>
-                    <span>${total_pagar:.2f}</span>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        puede_enviar = True
-        error_msg = ""
-
-        if not cliente_nombre:
-            puede_enviar = False
-            error_msg = "Por favor indica tu nombre."
-        elif "Delivery" in modalidad and not detalle_entrega:
-            puede_enviar = False
-            error_msg = "Por favor indica tu dirección de entrega."
-        elif "Local" in modalidad and not detalle_entrega:
-            puede_enviar = False
-            error_msg = "Por favor indica tu número de mesa."
-
-        if not puede_enviar:
-            st.warning(f"⚠️ {error_msg}")
-        else:
-            msg = f"🔥 *NUEVO PEDIDO - {NOMBRE_NEGOCIO}* 🔥\n"
-            msg += "--------------------------------------\n"
-            msg += f"👤 *Cliente:* {cliente_nombre}\n"
-            if cliente_telefono:
-                msg += f"📱 *Teléfono:* {cliente_telefono}\n"
-            msg += f"📍 *Modalidad:* {modalidad}\n"
-            if detalle_entrega:
-                msg += f"🏠 *Detalle Entrega:* {detalle_entrega}\n"
-            msg += "--------------------------------------\n"
-            msg += "📋 *DETALLE DEL PEDIDO:*\n"
-
-            for item_id, datos in carrito.items():
-                msg += f"• *{datos['cantidad']}x* {datos['nombre']} — ${datos['subtotal']:.2f}\n"
-                if datos["notas"]:
-                    msg += f"   ↳ _Nota: {datos['notas']}_\n"
-
-            msg += "--------------------------------------\n"
-            msg += f"🍔 *Subtotal Comida:* ${subtotal_comida:.2f}\n"
-            if costo_delivery > 0:
-                msg += f"🛵 *Delivery Fee:* ${costo_delivery:.2f}\n"
-            msg += f"💰 *TOTAL A PAGAR:* *${total_pagar:.2f}*\n"
-            msg += "--------------------------------------\n"
-            msg += f"💳 *Método de Pago:* {metodo_pago}\n"
-            if ref_pago:
-                msg += f"🔢 *Detalle/Ref de Pago:* {ref_pago}\n"
-            msg += "--------------------------------------\n"
-            msg += "¡Hola! Acabo de armar mi pedido por el menú web. ¿Me confirman la orden por favor? 🙏"
-
-            url_whatsapp = f"https://wa.me/{WHATSAPP_PHONE}?text={urllib.parse.quote(msg)}"
-
-            st.markdown(
-                f"""
-                <a href="{url_whatsapp}" target="_blank" class="whatsapp-btn">
-                    📲 Enviar Pedido por WhatsApp
-                </a>
-                <p style="text-align:center; color:#6B7280; font-size:11px; margin-top:8px;">
-                    Al tocar se abrirá WhatsApp con el pedido listo para enviar.
-                </p>
-                """,
-                unsafe_allow_html=True,
-            )
+components.html(html, height=2600, scrolling=True)
