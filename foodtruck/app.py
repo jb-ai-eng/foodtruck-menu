@@ -105,7 +105,261 @@ st.set_page_config(
 # 2. ESTILOS CSS PERSONALIZADOS (FONDO AMARILLO ANIMADO & CARDS BLANCAS)
 # ---------------------------------------------------------
 st.markdown(
-    
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Fondo general: Amarillo cálido y vibrante Street Food */
+    .stApp {
+        background: linear-gradient(135deg, #FFDE59 0%, #FFC107 50%, #FFA000 100%) !important;
+        background-attachment: fixed !important;
+        color: #1F2937;
+    }
+
+    /* Ocultar barra superior y pie por defecto */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+
+    /* Animaciones Clave */
+    @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 37, 33, 0.35); }
+        50% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(229, 37, 33, 0.6); }
+    }
+
+    @keyframes pulseWa {
+        0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4); }
+        50% { transform: scale(1.03); box-shadow: 0 10px 30px rgba(37, 211, 102, 0.7); }
+    }
+
+    @keyframes popBadge {
+        0% { transform: scale(0.85); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .hero-badge-open {
+        background: linear-gradient(135deg, #10B981, #059669);
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 30px;
+        display: inline-block;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    .hero-title {
+        color: #E52521;
+        font-size: 34px;
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .hero-subtitle {
+        color: #4B5563;
+        font-size: 15px;
+        margin-top: 4px;
+        font-weight: 500;
+    }
+
+    .hero-social-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #FFF3CD;
+        color: #B45309;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        border: 1px solid #FFE082;
+    }
+
+    /* Barra Flotante / Destacada del Carrito Activo */
+    .cart-alert-bar {
+        background: #1F2937;
+        color: #FFD000;
+        padding: 14px 20px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 2px solid #FFD000;
+        animation: pulseGlow 3s infinite;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    }
+
+    /* Cards de Productos */
+    .product-card {
+        background: #FFFFFF;
+        border-radius: 22px;
+        border: 2px solid #FFE58F;
+        overflow: hidden;
+        margin-bottom: 15px;
+        box-shadow: 0 10px 25px rgba(180, 83, 9, 0.12);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+    }
+    .product-card:hover {
+        transform: translateY(-8px) scale(1.015);
+        border-color: #E52521;
+        box-shadow: 0 18px 40px rgba(229, 37, 33, 0.22);
+    }
+
+    .product-img-box {
+        position: relative;
+        width: 100%;
+        height: 160px;
+        background: radial-gradient(circle, #FFFBEB 0%, #FDE68A 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-bottom: 2px solid #FFE58F;
+    }
+    .product-emoji {
+        font-size: 75px;
+        transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
+    }
+    .product-card:hover .product-emoji {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #E52521, #FF5722);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        box-shadow: 0 4px 12px rgba(229, 37, 33, 0.45);
+    }
+
+    .cart-active-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, #10B981, #059669);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 14px;
+        font-size: 12px;
+        font-weight: 800;
+        animation: popBadge 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .product-price-tag {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background: rgba(31, 41, 55, 0.92);
+        backdrop-filter: blur(6px);
+        border: 2px solid #FFC700;
+        color: #FFC700;
+        padding: 5px 14px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .product-info {
+        padding: 16px 18px;
+    }
+    .product-name {
+        color: #111827;
+        font-size: 19px;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+    .product-desc {
+        color: #4B5563;
+        font-size: 13px;
+        line-height: 1.5;
+        min-height: 48px;
+    }
+
+    .payment-info-box {
+        background-color: #FFFBEB;
+        border: 1px solid #FDE68A;
+        border-left: 5px solid #F59E0B;
+        padding: 12px 14px;
+        border-radius: 10px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #92400E;
+    }
+
+    .whatsapp-btn {
+        display: block;
+        width: 100%;
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: #FFFFFF !important;
+        text-align: center;
+        padding: 16px 20px;
+        font-size: 19px;
+        font-weight: 800;
+        border-radius: 16px;
+        text-decoration: none;
+        animation: pulseWa 2.5s infinite;
+        margin-top: 18px;
+    }
+
+    .summary-card {
+        background: #F9FAFB;
+        border: 2px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 16px;
+        margin-top: 15px;
+    }
+    .summary-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        margin-bottom: 6px;
+        color: #4B5563;
+        font-weight: 500;
+    }
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        font-size: 20px;
+        font-weight: 900;
+        color: #E52521;
+        border-top: 2px dashed #D1D5DB;
+        padding-top: 10px;
+        margin-top: 8px;
+    }
+
+    div[data-baseweb="tab-list"] {
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        padding: 6px;
+        gap: 8px;
+    }
+    div[aria-selected="true"] {
+        background-color: #E52521 !important;
+        color: #FFFFFF !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+        border-right: 2px solid #FFE082 !important;
+    }
+    </style>
+    """,
     unsafe_allow_html=True,
 )
 
