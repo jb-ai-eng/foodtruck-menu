@@ -13,7 +13,6 @@ DELIVERY_FEE = 3
 
 st.set_page_config(page_title="Victor's Fast Food", page_icon="🍔", layout="centered")
 
-# Estilos para ocultar la interfaz por defecto de Streamlit
 st.markdown(
     """<style>
     #MainMenu, header, footer {visibility: hidden;}
