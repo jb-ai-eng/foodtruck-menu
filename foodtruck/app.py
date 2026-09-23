@@ -5,14 +5,15 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # ==========================================
-# CONFIGURACIÓN DEL NEGOCIO
+# CONFIGURACIÓN: cambia solo estas 3 líneas
 # ==========================================
-WHATSAPP = "+584249367077"
-DIRECCION = "Urbanización Manoa, calle Jiraharas"
-DELIVERY_FEE = 3
+WHATSAPP = "+584249367077"   # Número con código de país, sin + ni espacios
+DIRECCION = "Urbanización Manoa, calle Jiraharas"  # Dirección del food truck
+DELIVERY_FEE = 3                   # Precio del delivery en $
 
 st.set_page_config(page_title="Victor's Fast Food", page_icon="🍔", layout="centered")
 
+# Oculta el menú, header y footer de Streamlit para que se vea como app
 st.markdown(
     """<style>
     #MainMenu, header, footer {visibility: hidden;}
@@ -21,6 +22,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Carga el logo (logo.png o logo.jpg) si existe en el repositorio
 base = pathlib.Path(__file__).parent
 logo_file = next((base / n for n in ["logo.png", "logo.jpg", "logo.jpeg"] if (base / n).exists()), None)
 if logo_file:
@@ -103,6 +105,7 @@ a.wa{display:block;text-align:center;margin-top:10px;color:#1a9e4b;font-weight:6
       <span class="lbl">📍 Dirección de entrega</span>
       <input type="text" id="f_a" placeholder="Calle, casa, punto de referencia" oninput="clr()">
     </div>
+    <label class="ck" style="margin-top:10px"><input type="checkbox" id="remember" checked> 💾 Recordar mis datos en este teléfono</label>
 
     <span class="lbl">💳 Método de pago</span>
     <div class="seg">
@@ -252,6 +255,7 @@ function send(){
   if (!t) return e.textContent = "Escribe tu teléfono.";
   if (mode == "d" && !a) return e.textContent = "Escribe la dirección de entrega.";
   if (!pay) return e.textContent = "Elige un método de pago.";
+  saveData();
 
   const id = Math.floor(1000 + Math.random() * 9000), s = sub(), fee = mode == "d" ? FEE : 0;
   const L = [
@@ -284,7 +288,32 @@ function send(){
   window.open(url, "_blank");
 }
 
-rCats(); rList(); rCart();
+function saveData(){
+  try {
+    if ($("remember").checked){
+      localStorage.setItem("vff_cliente", JSON.stringify({
+        n: $("f_n").value.trim(),
+        t: $("f_t").value.trim(),
+        a: $("f_a").value.trim()
+      }));
+    } else {
+      localStorage.removeItem("vff_cliente");
+    }
+  } catch (err) {}
+}
+
+function loadData(){
+  try {
+    const d = JSON.parse(localStorage.getItem("vff_cliente") || "null");
+    if (d){
+      $("f_n").value = d.n || "";
+      $("f_t").value = d.t || "";
+      $("f_a").value = d.a || "";
+    }
+  } catch (err) {}
+}
+
+rCats(); rList(); rCart(); loadData();
 </script>
 """
 
