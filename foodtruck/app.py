@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # ==========================================
 # CONFIGURACIÓN: cambia solo estas 3 líneas
 # ==========================================
-WHATSAPP = "58XXXXXXXXXX"          # Número con código de país, sin + ni espacios
+WHATSAPP = "04249367077"          # Número con código de país, sin + ni espacios
 DIRECCION = "Urbanización Manoa, calle Jiraharas"  # Dirección del food truck
 DELIVERY_FEE = 3                   # Precio del delivery en $
 
