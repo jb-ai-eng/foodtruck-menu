@@ -121,7 +121,7 @@ for producto, info in menu.items():
     col1, col2 = st.columns([1, 2])
 
     with col1:
-        st.image(info["foto"], use_column_width=True)
+        st.image(info["foto"], use_container_width=True)
 
     with col2:
         st.subheader(f"{producto} - ${info['precio']:.2f}")
