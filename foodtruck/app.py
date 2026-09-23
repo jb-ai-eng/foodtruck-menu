@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 # CONFIGURACIÓN: cambia solo estas 3 líneas
 # ==========================================
 WHATSAPP = "58XXXXXXXXXX"          # Número con código de país, sin + ni espacios
-DIRECCION = "Dirección del local"  # Dirección del food truck
+DIRECCION = "Urbanización Manoa, calle Jiraharas"  # Dirección del food truck
 DELIVERY_FEE = 3                   # Precio del delivery en $
 
 st.set_page_config(page_title="Victor's Fast Food", page_icon="🍔", layout="centered")
@@ -76,7 +76,7 @@ a.wa{display:block;text-align:center;margin-top:10px;color:#1a9e4b;font-weight:6
     __LOGO__
     <div>
       <h1>Victor's Fast Food</h1>
-      <p class="sub">📸 @victorsfast_food</p>
+            <p class="sub"><a href="https://www.instagram.com/victorsfast_food/" target="_blank" style="color:var(--acc);font-weight:600;text-decoration:none">📸 @victorsfast_food</a></p>
       <p class="sub">📍 __DIR__</p>
       <p class="sub">🛵 Delivery $__FEE__</p>
     </div>
