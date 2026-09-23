@@ -3,15 +3,63 @@ import os
 import urllib.parse
 import streamlit as st
 
-# 1. Configuración de la página
+# ---------------------------------------------------------
+# 1. CONFIGURACIÓN DE PÁGINA Y DISEÑO / COLORES
+# ---------------------------------------------------------
 st.set_page_config(
     page_title="Food Truck - Menú Digital", page_icon="🛞", layout="centered"
 )
 
+# Estilos CSS personalizados (Colores cálidos para Food Truck: Naranja / Rojo / Fondo Suave)
+st.markdown(
+    """
+    <style>
+    /* Fondo general */
+    .stApp {
+        background-color: #FAFAFA;
+    }
+    /* Encabezados principal */
+    h1 {
+        color: #D32F2F !important;
+        font-family: 'Trebuchet MS', sans-serif;
+    }
+    h2, h3 {
+        color: #E65100 !important;
+    }
+    /* Tarjetas de productos */
+    .stContainer {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.05);
+    }
+    /* Botón principal (WhatsApp) */
+    div.stButton > button:first-child {
+        background-color: #25D366 !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+        border-radius: 10px !important;
+        border: none !important;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+# ---------------------------------------------------------
+# 2. DATOS RECTIFICABLES DEL NEGOCIO (¡CÁMBIALOS AQUÍ!)
+# ---------------------------------------------------------
+NOMBRE_FOOD_TRUCK = "🔥 La Esquina Street Food"
+TELEFONO_WHATSAPP = (
+    "13051234567"  # Cambiar por el número real con código de país (ej: 1305...)
+)
+DIRECCION_TRUCK = "📍 1234 NW 36th St, Miami, FL 33142"
+HORARIO_ATENCION = "⏰ Miércoles a Domingo: 5:00 PM - 12:00 AM"
+
 USUARIOS_FILE = "usuarios.json"
 
 
-# Funciones para manejo de usuarios
 def cargar_usuarios():
     if not os.path.exists(USUARIOS_FILE):
         return {}
@@ -29,15 +77,20 @@ def guardar_usuario(usuario, password, telefono):
         json.dump(usuarios, f, indent=4)
 
 
-# Inicializar variables de sesión
 if "usuario_logueado" not in st.session_state:
     st.session_state["usuario_logueado"] = None
 
 # ---------------------------------------------------------
-# BARRA LATERAL (OPCIONAL: INICIAR SESIÓN / REGISTRO)
+# BARRA LATERAL (DATOS DEL TRUCK + CUENTA OPCIONAL)
 # ---------------------------------------------------------
 with st.sidebar:
-    st.header("👤 Mi Cuenta")
+    st.title("ℹ️ Información")
+    st.write(f"**Ubicación:**\n{DIRECCION_TRUCK}")
+    st.write(f"**Horario:**\n{HORARIO_ATENCION}")
+    st.write(f"**Teléfono:**\n+{TELEFONO_WHATSAPP}")
+
+    st.divider()
+    st.header("👤 Mi Cuenta (Opcional)")
 
     if st.session_state["usuario_logueado"]:
         st.success(f"Sesión activa: **{st.session_state['usuario_logueado']}**")
@@ -45,11 +98,9 @@ with st.sidebar:
             st.session_state["usuario_logueado"] = None
             st.rerun()
     else:
-        st.info("Iniciar sesión es opcional, ¡puedes pedir directamente!")
         opcion_cuenta = st.radio(
             "Acceso:", ["Ver Menú sin Cuenta", "Iniciar Sesión", "Registrarse"]
         )
-
         usuarios = cargar_usuarios()
 
         if opcion_cuenta == "Iniciar Sesión":
@@ -80,15 +131,15 @@ with st.sidebar:
                     st.success("¡Cuenta creada! Ya puedes iniciar sesión.")
 
 # ---------------------------------------------------------
-# PÁGINA PRINCIPAL: CATÁLOGO DIGITAL (VISIBLE PARA TODOS)
+# ENCABEZADO Y MENÚ INTERACTIVO
 # ---------------------------------------------------------
-st.title("🛞 Food Truck - Menú Digital")
+st.title(NOMBRE_FOOD_TRUCK)
+st.caption(f"{DIRECCION_TRUCK} | {HORARIO_ATENCION}")
 st.write(
-    "¡Bienvenido! Selecciona tus platillos favoritos y envía tu pedido por WhatsApp."
+    "¡Elige lo que quieres comer, arma tu pedido y envíalo directo a nuestro WhatsApp!"
 )
 st.divider()
 
-# Menú con imágenes (puedes reemplazar las URLs por fotos reales del negocio)
 menu = {
     "Hot Dog Clásico": {
         "precio": 5.00,
@@ -114,17 +165,14 @@ menu = {
 
 carrito = {}
 
-# Desplegar los productos en el menú
-st.header("📋 Nuestros Platillos")
+st.header("📋 Menú de Hoy")
 
 for producto, info in menu.items():
     col1, col2 = st.columns([1, 2])
-
     with col1:
         st.image(info["foto"], use_container_width=True)
-
     with col2:
-        st.subheader(f"{producto} - ${info['precio']:.2f}")
+        st.subheader(f"{producto} — ${info['precio']:.2f}")
         st.write(info["desc"])
         cant = st.number_input(
             f"Cantidad de {producto}",
@@ -138,54 +186,61 @@ for producto, info in menu.items():
                 "cantidad": cant,
                 "subtotal": cant * info["precio"],
             }
-
     st.divider()
 
 # ---------------------------------------------------------
-# SECCIÓN DE CONFIRMACIÓN Y ENVÍO A WHATSAPP
+# INTERACCIÓN DEL CLIENTE (CARRITO Y CONFIRMACIÓN)
 # ---------------------------------------------------------
-st.header("🛒 Confirmar Pedido")
+st.header("🛒 Tu Pedido")
 
 if carrito:
     total = sum(item["subtotal"] for item in carrito.values())
-    st.subheader(f"Total a pagar: ${total:.2f}")
 
-    # Si tiene sesión iniciada, usamos su nombre guardado; si no, le pedimos un nombre
+    # Resumen visual
+    st.subheader(f"Total estimado: ${total:.2f}")
+
     if st.session_state["usuario_logueado"]:
         nombre_cliente = st.session_state["usuario_logueado"]
-        st.success(f"Realizando pedido a nombre de: **{nombre_cliente}**")
+        st.info(f"Cliente: **{nombre_cliente}**")
     else:
-        nombre_cliente = st.text_input("Tu Nombre Completo:")
+        nombre_cliente = st.text_input(
+            "Tu Nombre:", placeholder="Ej. Carlos Pérez"
+        )
 
     direccion_mesa = st.text_input(
-        "📍 Número de Mesa o Dirección de Entrega:"
+        "Mesa # o Nombre para entregar:", placeholder="Ej. Mesa 4 / Para llevar"
     )
 
-    if st.button("📲 Enviar Pedido a WhatsApp", type="primary"):
+    if st.button("📲 Enviar Pedido por WhatsApp"):
         if not nombre_cliente:
-            st.error("Por favor ingresa tu nombre.")
+            st.error("Ingresa tu nombre para saber quién pide.")
         elif not direccion_mesa:
-            st.error("Por favor ingresa tu número de mesa o dirección.")
+            st.error("Ingresa el número de mesa o si es para llevar.")
         else:
-            TELEFONO_DUENO = (
-                "13051234567"  # Reemplazar por el WhatsApp real con código de país
-            )
-
-            msg = f"👋 *Nuevo Pedido de {nombre_cliente}*\n"
-            msg += f"📍 Ubicación/Mesa: {direccion_mesa}\n\n"
-            msg += "*Detalle del pedido:*\n"
+            msg = f"👋 *NUEVO PEDIDO - {NOMBRE_FOOD_TRUCK}*\n"
+            msg += f"👤 *Cliente:* {nombre_cliente}\n"
+            msg += f"📍 *Mesa/Entrega:* {direccion_mesa}\n\n"
+            msg += "📝 *Detalle del Pedido:*\n"
 
             for item, datos in carrito.items():
                 msg += f"• {datos['cantidad']}x {item} (${datos['subtotal']:.2f})\n"
 
-            msg += f"\n💰 *Total a Pagar:* ${total:.2f}"
+            msg += f"\n💰 *TOTAL A PAGAR:* ${total:.2f}\n"
+            msg += f"\n📍 *Ubicación del Local:* {DIRECCION_TRUCK}"
 
-            link_wa = f"https://wa.me/{TELEFONO_DUENO}?text={urllib.parse.quote(msg)}"
+            link_wa = f"https://wa.me/{TELEFONO_WHATSAPP}?text={urllib.parse.quote(msg)}"
 
             st.balloons()
-            st.success("¡Tu pedido está listo!")
+            st.success("¡Pedido armado correctamente!")
             st.markdown(
-                f"[👉 **Haz clic aquí para abrir WhatsApp y enviar la orden**]({link_wa})"
+                f"""
+                <a href="{link_wa}" target="_blank">
+                    <button style="background-color:#25D366; color:white; padding:15px 25px; border:none; border-radius:10px; font-size:18px; width:100%; cursor:pointer;">
+                        👉 Toca aquí para enviar a WhatsApp
+                    </button>
+                </a>
+                """,
+                unsafe_allow_html=True,
             )
 else:
-    st.info("Selecciona al menos un producto arriba para armar tu pedido.")
+    st.info("Agrega platillos arriba para ver tu resumen de compra.")
