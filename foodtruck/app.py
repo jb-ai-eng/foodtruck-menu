@@ -22,61 +22,32 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Carga el logo si existe logo.png en el repositorio
-logo_path = pathlib.Path(__file__).parent / "logo.png"
-if logo_path.exists():
-    logo_b64 = base64.b64encode(logo_path.read_bytes()).decode()
-    logo_html = f'<div class="logo"><img src="data:image/png;base64,{logo_b64}" alt="Logo"></div>'
+# Carga el logo (logo.png o logo.jpg) si existe en el repositorio
+base = pathlib.Path(__file__).parent
+logo_file = next((base / n for n in ["logo.png", "logo.jpg", "logo.jpeg"] if (base / n).exists()), None)
+if logo_file:
+    mime = "png" if logo_file.suffix == ".png" else "jpeg"
+    logo_b64 = base64.b64encode(logo_file.read_bytes()).decode()
+    logo_html = f'<div class="logo"><img src="data:image/{mime};base64,{logo_b64}" alt="Logo"></div>'
 else:
-    logo_html = '<div class="logo">🍔</div>'
+    logo_html = "<h1>🍔 Victor's Fast Food</h1>"
 
 HTML = r"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#FFF8F1;--card:#FFFFFF;--soft:#FCEFE4;--acc:#E07A5F;--acc2:#F2CC8F;--txt:#3D2C29;--mut:#8A7470;--line:#EFE1D6}
+:root{--bg:#FFF9EC;--card:#FFFFFF;--soft:#FFF1C9;--acc:#D9342B;--acc2:#F5D33B;--txt:#1F1F1F;--mut:#6B6B6B;--line:#F0E3C4;--dark:#111111}
 *{box-sizing:border-box}
 body{margin:0;font-family:Poppins,sans-serif;background:var(--bg);color:var(--txt)}
 .wrap{max-width:680px;margin:0 auto;padding:12px 12px 40px}
-.hero{background:var(--soft);border-radius:20px;padding:18px;display:flex;gap:14px;align-items:center}
-.logo{width:70px;height:70px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:36px;flex:none;overflow:hidden}
-.logo img{width:100%;height:100%;object-fit:cover}
-h1{margin:0;font-size:22px}
-.sub{margin:2px 0 0;font-size:13px;color:var(--mut)}
-.cats{display:flex;gap:8px;overflow-x:auto;padding:14px 0 10px}
-.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;white-space:nowrap;cursor:pointer;color:var(--txt)}
-.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
-.row{display:flex;gap:12px;align-items:flex-start}
-.emo{font-size:28px;width:48px;height:48px;border-radius:12px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
-.name{margin:0;font-weight:600;font-size:15px}
-.desc{margin:3px 0 0;font-size:12.5px;color:var(--mut);line-height:1.5}
-.price{font-weight:600;color:var(--acc);font-size:16px;white-space:nowrap}
-.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--txt)}
-.btn.add{background:var(--acc);border-color:var(--acc);color:#fff;margin-top:6px}
-.opt{background:var(--soft);border-radius:12px;padding:12px;margin-top:12px}
-.lbl{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
-input[type=text],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:14px;background:#fff;color:var(--txt)}
-.ck{display:inline-flex;align-items:center;gap:5px;font-size:13px;margin:4px 12px 4px 0}
-.seg{display:flex;gap:8px}.seg .btn{flex:1;padding:11px}
-.seg .btn.on{background:var(--acc2);border-color:var(--acc2);font-weight:600}
-.line{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px dashed var(--line)}
-.q{width:30px;height:30px;padding:0;border-radius:50%}
-.tot{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:4px}
-.big{font-size:20px;font-weight:600;color:var(--txt)}
-.send{width:100%;background:#25D366;border:none;color:#fff;border-radius:14px;padding:14px;font:inherit;font-weight:600;font-size:16px;margin-top:10px;cursor:pointer}
-.err{color:#C0392B;font-size:13px;margin:8px 0 0;min-height:1em}
-.bar{position:sticky;bottom:10px;background:var(--txt);color:#fff;border-radius:14px;padding:13px 16px;display:none;justify-content:space-between;cursor:pointer;margin-top:10px;font-weight:500}
-.pay{background:var(--soft);border-radius:12px;padding:12px;font-size:13px;line-height:1.7;margin-top:10px}
-pre{white-space:pre-wrap;font-size:12px;margin:0;font-family:inherit}
-a.wa{display:block;text-align:center;margin-top:10px;color:#1a9e4b;font-weight:600}
-</style>
-
-<div class="wrap">
-  <div class="hero">
+.hero{background:var(--dark);border-radius:20px;padding:16px 16px 18px;text-align:center}
+.logo{max-width:260px;margin:0 auto 6px}
+.logo img{width:100%;height:auto;display:block}
+h1{margin:0 0 6px;font-size:22px;color:var(--acc2)}
+.sub{margin:4px 0 0;font-size:13px;color:#E8E8E8}
+.ca  <div class="hero">
     __LOGO__
     <div>
-      <h1>Victor's Fast Food</h1>
-            <p class="sub"><a href="https://www.instagram.com/victorsfast_food/" target="_blank" style="color:var(--acc);font-weight:600;text-decoration:none">📸 @victorsfast_food</a></p>
+      <p class="sub"><a href="https://www.instagram.com/victorsfast_food/" target="_blank" style="color:var(--acc2);font-weight:600;text-decoration:none">📸 @victorsfast_food</a></p>
       <p class="sub">📍 __DIR__</p>
       <p class="sub">🛵 Delivery $__FEE__</p>
     </div>
