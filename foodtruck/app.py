@@ -272,7 +272,6 @@ st.markdown(
         font-family: 'Poppins', sans-serif;
     }}
 
-    /* Fondo con la imagen del logo en Base64 */
     .stApp {{
         {bg_css}
         color: #FFFFFF;
@@ -280,7 +279,6 @@ st.markdown(
 
     header, footer {{visibility: hidden;}}
 
-    /* Tarjetas del Menú con cristal oscuro y borde rojo */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         background: rgba(15, 15, 20, 0.85) !important;
         backdrop-filter: blur(12px) saturate(180%);
@@ -289,7 +287,6 @@ st.markdown(
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }}
 
-    /* Botón Instagram */
     .ig-button {{
         display: inline-flex;
         align-items: center;
@@ -306,7 +303,6 @@ st.markdown(
     }}
     .ig-button:hover {{ transform: scale(1.05); }}
 
-    /* Botón Mapa */
     .map-button {{
         display: inline-flex;
         align-items: center;
@@ -323,7 +319,6 @@ st.markdown(
     }}
     .map-button:hover {{ transform: scale(1.05); }}
 
-    /* Badges de especialidad */
     .badge-tag {{
         background-color: rgba(229, 27, 36, 0.25);
         border: 1px solid #E51B24;
@@ -343,7 +338,6 @@ st.markdown(
         margin-top: 4px;
     }}
 
-    /* Botón de Enviar Pedido por WhatsApp */
     .wa-btn {{
         display: block;
         width: 100%;
@@ -431,33 +425,44 @@ with col_c:
 # SECCIÓN GALERÍA DE INSTAGRAM Y FOTOS
 # ---------------------------------------------------------
 with st.expander("📸 Ver Fotos del Menú & Especialidades Oficiales", expanded=False):
-    st.markdown("<p style='text-align:center; color:#AAA;'>Descubre nuestros platillos estrella directamente de la cocina:</p>", unsafe_allow_html=True)
-    g1, g2, g3 = st.columns(3)
-    with g1:
-        img1 = os.path.join(base_dir, "assets", "menu_page1.jpg")
-        if os.path.exists(img1):
-            st.image(img1, caption="🍔 Hamburguesas & Perros", use_container_width=True)
-        else:
-            st.info("🍔 Hamburguesas con Smash Beef y Toppings Extra")
-    with g2:
-        img2 = os.path.join(os.path.dirname(__file__), "assets", "menu_page2.jpg")
-        if os.path.exists(img2):
-            st.image(img2, caption="🌯 Enrollados & Pepitos Monstruo", use_container_width=True)
-        else:
-            st.info("🌭 Perros Calientes Especiales y Polacos")
-    with g3:
-        st.markdown(
-            f"""
-            <div style="text-align:center; padding: 25px 15px; background: rgba(229, 27, 36, 0.1); border-radius: 16px; border: 1px dashed #E51B24;">
-                <h4 style="color:#FFC72C; margin-bottom: 8px;">📸 ¿Quieres ver más?</h4>
-                <p style="font-size:13px; color:#DDD;">Publicamos promociones diarias y videos en vivo en nuestro perfil.</p>
-                <a href="{INSTAGRAM_URL}" target="_blank" class="ig-button" style="margin-top:10px;">
-                    Ver en Instagram 📲
-                </a>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    st.markdown("<p style='text-align:center; color:#AAA;'>Descubre nuestras especialidades reales recién hechas:</p>", unsafe_allow_html=True)
+    
+    # Búsqueda de la foto de comida subida
+    foto_comida_path = None
+    for f_posible in [
+        os.path.join(base_dir, "assets", "fotos_comida.jpg"),
+        os.path.join(base_dir, "assets", "fotos_comida.png"),
+        os.path.join(base_dir, "fotos_comida.jpg"),
+        os.path.join(base_dir, "fotos_comida.png"),
+    ]:
+        if os.path.exists(f_posible):
+            foto_comida_path = f_posible
+            break
+
+    if foto_comida_path:
+        st.image(foto_comida_path, caption="🍔 Hamburguesa Crispy · 🥪 Club House · 🌯 Pepito Mixto", use_container_width=True)
+    else:
+        # Pestañas con imágenes alternativas si no encuentra la combinada
+        f1, f2 = st.columns(2)
+        with f1:
+            img1 = os.path.join(base_dir, "assets", "menu_page1.jpg")
+            if os.path.exists(img1):
+                st.image(img1, caption="🍔 Hamburguesas & Perros", use_container_width=True)
+        with f2:
+            img2 = os.path.join(base_dir, "assets", "menu_page2.jpg")
+            if os.path.exists(img2):
+                st.image(img2, caption="🌯 Enrollados & Pepitos Monstruo", use_container_width=True)
+
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-top:10px;">
+            <a href="{INSTAGRAM_URL}" target="_blank" class="ig-button">
+                📸 Ver más fotos y vídeos en Instagram @{INSTAGRAM_HANDLE}
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.divider()
 
