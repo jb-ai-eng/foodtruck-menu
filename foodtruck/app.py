@@ -153,24 +153,6 @@ MENU_ITEMS = [
         "badge": "🌯 Para Compartir",
         "emoji": "🌯"
     },
-    {
-        "id": "enrollado_mixto",
-        "categoria": "enrollados",
-        "nombre": "Enrollado Mixto",
-        "precio": 20.00,
-        "descripcion": "Combinación perfecta de carne y pollo, jamón, queso, tocineta, huevo y aderezos especiales.",
-        "badge": "🔥 Mixto Top",
-        "emoji": "🌯"
-    },
-    {
-        "id": "pepito_mixto",
-        "categoria": "enrollados",
-        "nombre": "Pepito Mixto Especial",
-        "precio": 25.00,
-        "descripcion": "Pan baguette extra largo con carne y pollo abundantes, jamón, tocineta, huevo, queso fundido y papitas.",
-        "badge": "👑 El Monstruo",
-        "emoji": "🥖"
-    },
 
     # --- SANDWICHES & CLUB HOUSE ---
     {
@@ -212,15 +194,6 @@ MENU_ITEMS = [
         "descripcion": "Vaso frío de té helado con el punto perfecto de limón refrescante.",
         "badge": "🧊 Con Hielo",
         "emoji": "🍹"
-    },
-    {
-        "id": "refresco_1l",
-        "categoria": "bebidas",
-        "nombre": "Refresco 1.0L",
-        "precio": 2.00,
-        "descripcion": "Botella de 1 Litro fría para compartir en grupo.",
-        "badge": "🍾 Familiar",
-        "emoji": "🍾"
     }
 ]
 
@@ -235,15 +208,19 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# BÚSQUEDA Y CODIFICACIÓN EN BASE64 DE LA IMAGEN DE FONDO
+# BÚSQUEDA Y CODIFICACIÓN EN BASE64 DEL LOGO Y IMÁGENES
 # ---------------------------------------------------------
 base_dir = os.path.dirname(__file__)
+root_dir = os.path.abspath(os.path.join(base_dir, ".."))
+
 logo_path = None
 for posible in [
     os.path.join(base_dir, "assets", "logo.jpg"),
     os.path.join(base_dir, "assets", "logo.png"),
     os.path.join(base_dir, "logo.jpg"),
     os.path.join(base_dir, "logo.png"),
+    os.path.join(root_dir, "logo.jpg"),
+    os.path.join(root_dir, "logo.png"),
 ]:
     if os.path.exists(posible):
         logo_path = posible
@@ -260,9 +237,7 @@ if logo_path:
         background-size: cover !important;
     """
 
-# ---------------------------------------------------------
-# ESTILOS CSS CON LOGO DE FONDO EN BASE64 & CRISTAL TRASLÚCIDO
-# ---------------------------------------------------------
+# Estilos CSS
 st.markdown(
     f"""
     <style>
@@ -395,7 +370,7 @@ def actualizar_especificaciones(item_id, notas):
         st.session_state["carrito"][item_id]["especificaciones"] = notas.strip() if notas else "Con todo"
 
 # ---------------------------------------------------------
-# HEADER: LOGO ENCABEZADO, REDES Y UBICACIÓN
+# HEADER: LOGO, REDES Y UBICACIÓN
 # ---------------------------------------------------------
 col_l, col_c, col_r = st.columns([1, 2, 1])
 with col_c:
@@ -427,13 +402,13 @@ with col_c:
 with st.expander("📸 Ver Fotos del Menú & Especialidades Oficiales", expanded=False):
     st.markdown("<p style='text-align:center; color:#AAA;'>Descubre nuestras especialidades reales recién hechas:</p>", unsafe_allow_html=True)
     
-    # Búsqueda de la foto de comida subida
+    # Busca la foto tanto en la carpeta raíz como en assets
     foto_comida_path = None
     for f_posible in [
-        os.path.join(base_dir, "assets", "fotos_comida.jpg"),
-        os.path.join(base_dir, "assets", "fotos_comida.png"),
+        os.path.join(root_dir, "fotos_comida.jpg"),
+        os.path.join(root_dir, "fotos_comida.png"),
         os.path.join(base_dir, "fotos_comida.jpg"),
-        os.path.join(base_dir, "fotos_comida.png"),
+        os.path.join(base_dir, "assets", "fotos_comida.jpg"),
     ]:
         if os.path.exists(f_posible):
             foto_comida_path = f_posible
@@ -442,16 +417,7 @@ with st.expander("📸 Ver Fotos del Menú & Especialidades Oficiales", expanded
     if foto_comida_path:
         st.image(foto_comida_path, caption="🍔 Hamburguesa Crispy · 🥪 Club House · 🌯 Pepito Mixto", use_container_width=True)
     else:
-        # Pestañas con imágenes alternativas si no encuentra la combinada
-        f1, f2 = st.columns(2)
-        with f1:
-            img1 = os.path.join(base_dir, "assets", "menu_page1.jpg")
-            if os.path.exists(img1):
-                st.image(img1, caption="🍔 Hamburguesas & Perros", use_container_width=True)
-        with f2:
-            img2 = os.path.join(base_dir, "assets", "menu_page2.jpg")
-            if os.path.exists(img2):
-                st.image(img2, caption="🌯 Enrollados & Pepitos Monstruo", use_container_width=True)
+        st.warning("Subiendo la vista previa de las imágenes...")
 
     st.markdown(
         f"""
@@ -542,7 +508,6 @@ with col_order:
     else:
         subtotal_orden = sum(d["subtotal"] for d in carrito.values())
 
-        # Desglose de productos agregados
         for pid, datos in list(carrito.items()):
             with st.container(border=True):
                 c_text, c_del = st.columns([4, 1])
