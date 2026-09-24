@@ -1,327 +1,554 @@
-import base64
-import pathlib
-
+import os
+import textwrap
+import urllib.parse
+from datetime import datetime
 import streamlit as st
-import streamlit.components.v1 as components
 
-# ==========================================
-# CONFIGURACIÓN: cambia solo estas 3 líneas
-# ==========================================
-WHATSAPP = "+584249367077"   # Número con código de país, sin + ni espacios
-DIRECCION = "Urbanización Manoa, calle Jiraharas"  # Dirección del food truck
-DELIVERY_FEE = 3                   # Precio del delivery en $
+# =========================================================
+# CONFIGURACIÓN DEL NEGOCIO & DATOS REALES
+# =========================================================
+NOMBRE_NEGOCIO = "Victor's Fast Food"
+ESLOGAN = "⚡ High-Performance Street Food | Sabor Urbano Premium"
+INSTAGRAM = "victorsfast_food"
+WHATSAPP_PHONE = "584249367077"
+DELIVERY_FEE = 3.00
+DIRECCION_LOCAL = "Food Truck Victor's Fast Food — Punto Central"
 
-st.set_page_config(page_title="Victor's Fast Food", page_icon="🍔", layout="centered")
+DATOS_PAGO = {
+    "pago_movil": {
+        "banco": "Banesco",
+        "telefono": "0424-9367077",
+        "cedula": "20.505.294",
+        "titular": "Hugo Victor",
+    },
+    "binance": {
+        "email": "Hugo_victor_17@hotmail.com"
+    },
+    "efectivo": {
+        "detalle": "Billetes de $ USD en buen estado. Indicar denominación para el cambio."
+    }
+}
 
-# Oculta el menú, header y footer de Streamlit para que se vea como app
+CATEGORIAS = [
+    {"id": "todos", "nombre": "⚡ Todo el Menú"},
+    {"id": "hamburguesas", "nombre": "🍔 Hamburguesas"},
+    {"id": "perros", "nombre": "🌭 Perros Calientes"},
+    {"id": "enrollados", "nombre": "🌯 Enrollados & Pepitos"},
+    {"id": "sandwiches", "nombre": "🥪 Sandwiches & Club House"},
+    {"id": "extras", "nombre": "🍟 Salchipapas & Extras"},
+    {"id": "bebidas", "nombre": "🥤 Bebidas Frías"},
+]
+
+MENU_ITEMS = [
+    # --- HAMBURGUESAS ---
+    {
+        "id": "hamb_sencilla",
+        "categoria": "hamburguesas",
+        "nombre": "Hamburguesa Sencilla",
+        "precio": 6.00,
+        "descripcion": "Pan artesanal, carne smash premium, lechuga, tomate, cebolla, papitas crujientes y queso amarillo fundido.",
+        "badge": "🥩 Clásica",
+        "emoji": "🍔"
+    },
+    {
+        "id": "hamb_carne",
+        "categoria": "hamburguesas",
+        "nombre": "Hamburguesa de Carne",
+        "precio": 8.00,
+        "descripcion": "Carne de res jugosa, tocineta ahumada crujiente, jamón, queso americano, huevo frito, vegetales y papitas.",
+        "badge": "🔥 Favorita",
+        "emoji": "🍔"
+    },
+    {
+        "id": "hamb_pollo",
+        "categoria": "hamburguesas",
+        "nombre": "Hamburguesa de Pollo",
+        "precio": 8.00,
+        "descripcion": "Pechuga de pollo a la plancha marinada, tocineta, jamón, queso americano, huevo, vegetales y papitas.",
+        "badge": "🍗 Pechuga",
+        "emoji": "🍔"
+    },
+    {
+        "id": "hamb_chuleta",
+        "categoria": "hamburguesas",
+        "nombre": "Hamburguesa Chuleta",
+        "precio": 8.00,
+        "descripcion": "Chuleta ahumada seleccionada, tocineta, jamón, queso americano, huevo, vegetales frescos y papitas.",
+        "badge": "🍖 Ahumada",
+        "emoji": "🍔"
+    },
+    {
+        "id": "hamb_crispy",
+        "categoria": "hamburguesas",
+        "nombre": "Hamburguesa Crispy",
+        "precio": 8.50,
+        "descripcion": "Pollo empanizado ultra crujiente dorado, tocineta, jamón, queso amarillo, vegetales y papas.",
+        "badge": "⚡ Extra Crunch",
+        "emoji": "🍔"
+    },
+    {
+        "id": "hamb_doble_mixta",
+        "categoria": "hamburguesas",
+        "nombre": "Hamburguesa Doble / Mixta",
+        "precio": 15.00,
+        "descripcion": "Doble proteína a tu elección (carne/pollo/chuleta), doble tocineta, jamón, queso americano, huevo y papitas.",
+        "badge": "👑 Best Seller",
+        "emoji": "🍔"
+    },
+
+    # --- PERROS CALIENTES ---
+    {
+        "id": "dog_pequeno",
+        "categoria": "perros",
+        "nombre": "Perro Pequeño",
+        "precio": 2.50,
+        "descripcion": "Pan suave, salchicha nacional, lechuga, tomate picadito, cebolla, queso amarillo, papitas y salsa de la casa.",
+        "badge": "🥖 Street Style",
+        "emoji": "🌭"
+    },
+    {
+        "id": "dog_sencillo",
+        "categoria": "perros",
+        "nombre": "Perro Sencillo",
+        "precio": 3.50,
+        "descripcion": "Pan grande, salchicha nacional, lechuga, tomate, cebolla, queso amarillo, lluvia de papitas y salsas.",
+        "badge": "⭐ El Más Pedido",
+        "emoji": "🌭"
+    },
+    {
+        "id": "dog_especial",
+        "categoria": "perros",
+        "nombre": "Perro Especial",
+        "precio": 5.00,
+        "descripcion": "Pan grande, salchicha nacional, jamón, tocineta crujiente, huevo, queso amarillo fundido y vegetales.",
+        "badge": "🥓 Con Todo",
+        "emoji": "🌭"
+    },
+    {
+        "id": "dog_polaco",
+        "categoria": "perros",
+        "nombre": "Perro Polaco",
+        "precio": 8.00,
+        "descripcion": "Pan grande, salchicha polaca premium, tocineta crocante, jamón, queso amarillo derretido, huevo y vegetales.",
+        "badge": "👑 Especialidad",
+        "emoji": "🌭"
+    },
+
+    # --- ENROLLADOS & PEPITOS ---
+    {
+        "id": "enrollado_carne",
+        "categoria": "enrollados",
+        "nombre": "Enrollado de Carne",
+        "precio": 20.00,
+        "descripcion": "Carne tierna salteada, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas crujientes.",
+        "badge": "🌯 Gigante",
+        "emoji": "🌯"
+    },
+    {
+        "id": "enrollado_pollo",
+        "categoria": "enrollados",
+        "nombre": "Enrollado de Pollo",
+        "precio": 20.00,
+        "descripcion": "Pollo jugoso en cubos, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas.",
+        "badge": "🌯 Para Compartir",
+        "emoji": "🌯"
+    },
+    {
+        "id": "enrollado_mixto",
+        "categoria": "enrollados",
+        "nombre": "Enrollado Mixto",
+        "precio": 20.00,
+        "descripcion": "Combinación perfecta de carne y pollo, jamón, queso, tocineta, huevo y aderezos especiales.",
+        "badge": "🔥 Mixto Top",
+        "emoji": "🌯"
+    },
+    {
+        "id": "pepito_mixto",
+        "categoria": "enrollados",
+        "nombre": "Pepito Mixto Especial",
+        "precio": 25.00,
+        "descripcion": "Pan baguette extra largo con carne y pollo abundantes, jamón, tocineta, huevo, queso fundido y papitas.",
+        "badge": "👑 El Monstruo",
+        "emoji": "🥖"
+    },
+    {
+        "id": "mini_pepito",
+        "categoria": "enrollados",
+        "nombre": "Mini Pepito",
+        "precio": 10.00,
+        "descripcion": "Carne salteada, vegetales seleccionados, tocineta, queso amarillo y papitas en porción individual.",
+        "badge": "🎯 Personal",
+        "emoji": "🥖"
+    },
+
+    # --- SANDWICHES & CLUB HOUSE ---
+    {
+        "id": "club_house",
+        "categoria": "sandwiches",
+        "nombre": "Club House 4 Pisos",
+        "precio": 12.00,
+        "descripcion": "Cuatro pisos de pan tostado con pollo jugoso, jamón, queso amarillo, huevo, vegetales y papas fritas.",
+        "badge": "🥪 4 Niveles",
+        "emoji": "🥪"
+    },
+    {
+        "id": "sand_granjero",
+        "categoria": "sandwiches",
+        "nombre": "Sandwich Granjero",
+        "precio": 10.00,
+        "descripcion": "Pan tipo granjero horneado, pechuga de pollo, lechuga, tomate, cebolla, queso amarillo y papas fritas.",
+        "badge": "🌾 Granjero",
+        "emoji": "🥪"
+    },
+
+    # --- SALCHIPAPAS & EXTRAS ---
+    {
+        "id": "salchipapa",
+        "categoria": "extras",
+        "nombre": "Salchipapa Extrema",
+        "precio": 15.00,
+        "descripcion": "Montaña de papas fritas doradas, abundante salchicha en rodajas, lluvia de queso y baño de salsas.",
+        "badge": "🍟 Para 2 o 3",
+        "emoji": "🍟"
+    },
+    {
+        "id": "papa_500",
+        "categoria": "extras",
+        "nombre": "Ración de Papa 500gr",
+        "precio": 5.00,
+        "descripcion": "Medio kilo de papas fritas premium crujientes al punto de sal.",
+        "badge": "🍟 Familiar",
+        "emoji": "🍟"
+    },
+    {
+        "id": "papa_250",
+        "categoria": "extras",
+        "nombre": "Ración de Papa 250gr",
+        "precio": 2.50,
+        "descripcion": "Porción individual de papas fritas doraditas y crujientes.",
+        "badge": "🍟 Individual",
+        "emoji": "🍟"
+    },
+    {
+        "id": "tequenos",
+        "categoria": "extras",
+        "nombre": "Ración de Tequeños (6u)",
+        "precio": 5.00,
+        "descripcion": "Tequeños crujientes rellenos de queso derretido con salsa tártara de ajo artesanal.",
+        "badge": "🧀 Favoritos",
+        "emoji": "🧀"
+    },
+
+    # --- BEBIDAS ---
+    {
+        "id": "nestea",
+        "categoria": "bebidas",
+        "nombre": "Nestea Frío con Limón",
+        "precio": 2.00,
+        "descripcion": "Vaso frío de té helado con el punto perfecto de limón refrescante.",
+        "badge": "🧊 Con Hielo",
+        "emoji": "🍹"
+    },
+    {
+        "id": "refresco_botellita",
+        "categoria": "bebidas",
+        "nombre": "Refresco Botellita",
+        "precio": 1.00,
+        "descripcion": "Refresco personal helado (Coca-Cola, Pepsi, Hit, Chinotto).",
+        "badge": "🥤 Helado",
+        "emoji": "🥤"
+    },
+    {
+        "id": "refresco_1l",
+        "categoria": "bebidas",
+        "nombre": "Refresco 1.0L",
+        "precio": 2.00,
+        "descripcion": "Botella de 1 Litro fría para compartir en grupo.",
+        "badge": "🍾 Familiar",
+        "emoji": "🍾"
+    }
+]
+
+# ---------------------------------------------------------
+# CONFIGURACIÓN DE PÁGINA
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title=f"{NOMBRE_NEGOCIO} | Digital Ordering Terminal",
+    page_icon="🍔",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# Estilos CSS globales
 st.markdown(
-    """<style>
-    #MainMenu, header, footer {visibility: hidden;}
-    .block-container {padding-top: 0.5rem; padding-bottom: 0; max-width: 720px;}
-    </style>""",
-    unsafe_allow_html=True,
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Outfit:wght@600;800;900&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .stApp {
+        background: #08090C;
+        color: #FFFFFF;
+    }
+
+    header, footer {visibility: hidden;}
+
+    /* Badge visuales */
+    .badge-tag {
+        background: rgba(229, 37, 33, 0.2);
+        border: 1px solid #E52521;
+        color: #FF5A50;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .price-tag {
+        font-family: 'Outfit', sans-serif;
+        font-size: 22px;
+        font-weight: 900;
+        color: #FFD000;
+    }
+
+    /* Botón de envío a WhatsApp */
+    .wa-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        background: #25D366;
+        color: #000000 !important;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 900;
+        font-size: 16px;
+        padding: 14px 20px;
+        border-radius: 14px;
+        text-decoration: none;
+        margin-top: 15px;
+        text-transform: uppercase;
+        box-shadow: 0 5px 20px rgba(37, 211, 102, 0.4);
+    }
+    .wa-btn:hover {
+        background: #20ba5a;
+        color: #FFFFFF !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-# Carga el logo (logo.png o logo.jpg) si existe en el repositorio
-base = pathlib.Path(__file__).parent
-logo_file = next((base / n for n in ["logo.png", "logo.jpg", "logo.jpeg"] if (base / n).exists()), None)
-if logo_file:
-    mime = "png" if logo_file.suffix == ".png" else "jpeg"
-    logo_b64 = base64.b64encode(logo_file.read_bytes()).decode()
-    logo_html = f'<div class="logo"><img src="data:image/{mime};base64,{logo_b64}" alt="Logo"></div>'
-else:
-    logo_html = "<h1>🍔 Victor's Fast Food</h1>"
+# ---------------------------------------------------------
+# ESTADO REACTIVO DEL CARRITO
+# ---------------------------------------------------------
+if "carrito" not in st.session_state:
+    st.session_state["carrito"] = {}
 
-HTML = r"""
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#FFF9EC;--card:#FFFFFF;--soft:#FFF1C9;--acc:#D9342B;--acc2:#F5D33B;--txt:#1F1F1F;--mut:#6B6B6B;--line:#F0E3C4;--dark:#111111}
-*{box-sizing:border-box}
-body{margin:0;font-family:Poppins,sans-serif;background:var(--bg);color:var(--txt)}
-.wrap{max-width:680px;margin:0 auto;padding:12px 12px 40px}
-.hero{background:var(--dark);border-radius:20px;padding:16px 16px 18px;text-align:center}
-.logo{max-width:260px;margin:0 auto 6px}
-.logo img{width:100%;height:auto;display:block}
-h1{margin:0 0 6px;font-size:22px;color:var(--acc2)}
-.sub{margin:4px 0 0;font-size:13px;color:#E8E8E8}
-.cats{display:flex;gap:8px;overflow-x:auto;padding:14px 0 10px}
-.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;white-space:nowrap;cursor:pointer;color:var(--txt)}
-.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
-.row{display:flex;gap:12px;align-items:flex-start}
-.emo{font-size:28px;width:48px;height:48px;border-radius:12px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
-.name{margin:0;font-weight:600;font-size:15px}
-.desc{margin:3px 0 0;font-size:12.5px;color:var(--mut);line-height:1.5}
-.price{font-weight:600;color:var(--acc);font-size:16px;white-space:nowrap}
-.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--txt)}
-.btn.add{background:var(--acc);border-color:var(--acc);color:#fff;margin-top:6px}
-.opt{background:var(--soft);border-radius:12px;padding:12px;margin-top:12px}
-.lbl{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
-input[type=text],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:14px;background:#fff;color:var(--txt)}
-.ck{display:inline-flex;align-items:center;gap:5px;font-size:13px;margin:4px 12px 4px 0}
-.seg{display:flex;gap:8px}.seg .btn{flex:1;padding:11px}
-.seg .btn.on{background:var(--acc2);border-color:var(--acc2);font-weight:600}
-.line{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px dashed var(--line)}
-.q{width:30px;height:30px;padding:0;border-radius:50%}
-.tot{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:4px}
-.big{font-size:20px;font-weight:600;color:var(--txt)}
-.send{width:100%;background:#25D366;border:none;color:#fff;border-radius:14px;padding:14px;font:inherit;font-weight:600;font-size:16px;margin-top:10px;cursor:pointer}
-.err{color:#C0392B;font-size:13px;margin:8px 0 0;min-height:1em}
-.bar{position:sticky;bottom:10px;background:var(--txt);color:#fff;border-radius:14px;padding:13px 16px;display:none;justify-content:space-between;cursor:pointer;margin-top:10px;font-weight:500}
-.pay{background:var(--soft);border-radius:12px;padding:12px;font-size:13px;line-height:1.7;margin-top:10px}
-pre{white-space:pre-wrap;font-size:12px;margin:0;font-family:inherit}
-a.wa{display:block;text-align:center;margin-top:10px;color:#1a9e4b;font-weight:600}
-</style>
-
-<div class="wrap">
-  <div class="hero">
-    __LOGO__
-    <div>
-      <p class="sub"><a href="https://www.instagram.com/victorsfast_food/" target="_blank" style="color:var(--acc2);font-weight:600;text-decoration:none">📸 @victorsfast_food</a></p>
-      <p class="sub">📍 __DIR__</p>
-      <p class="sub">🛵 Delivery $__FEE__</p>
-    </div>
-  </div>
-
-  <div class="cats" id="cats"></div>
-  <div id="list"></div>
-  <div class="bar" id="bar" onclick="document.getElementById('cartbox').scrollIntoView({behavior:'smooth'})"></div>
-
-  <div class="card" id="cartbox" style="margin-top:16px">
-    <p class="name" style="font-size:18px">🛒 Tu pedido</p>
-    <div id="cart"></div>
-
-    <span class="lbl">Tipo de entrega</span>
-    <div class="seg">
-      <button class="btn on" id="m_d" onclick="setMode('d')">🛵 Delivery +$__FEE__</button>
-      <button class="btn" id="m_r" onclick="setMode('r')">🏪 Retiro en local</button>
-    </div>
-
-    <span class="lbl">👤 Tu nombre</span>
-    <input type="text" id="f_n" placeholder="María Pérez" oninput="clr()">
-    <span class="lbl">📞 Tu teléfono</span>
-    <input type="text" id="f_t" placeholder="0414 1234567" oninput="clr()">
-    <div id="adwrap">
-      <span class="lbl">📍 Dirección de entrega</span>
-      <input type="text" id="f_a" placeholder="Calle, casa, punto de referencia" oninput="clr()">
-    </div>
-    <label class="ck" style="margin-top:10px"><input type="checkbox" id="remember" checked> 💾 Recordar mis datos en este teléfono</label>
-
-    <span class="lbl">💳 Método de pago</span>
-    <div class="seg">
-      <button class="btn" id="p_pm" onclick="setPay('pm')">📱 Pago móvil</button>
-      <button class="btn" id="p_bn" onclick="setPay('bn')">🪙 Binance</button>
-    </div>
-    <div id="payinfo"></div>
-
-    <div id="tot" style="margin-top:14px"></div>
-    <p class="err" id="err"></p>
-    <button class="send" onclick="send()">💬 Enviar pedido por WhatsApp</button>
-    <div id="prev"></div>
-  </div>
-</div>
-
-<script>
-const WA = "__WA__";
-const FEE = Number("__FEE__");
-const CATS = [["Todos","📋"],["Perros","🌭"],["Hamburguesas","🍔"],["Enrollados","🌯"],["Especiales","🥪"],["Extras","🍟"],["Bebidas","🥤"]];
-const EMO = {Perros:"🌭",Hamburguesas:"🍔",Enrollados:"🌯",Especiales:"🥪",Extras:"🍟",Bebidas:"🥤"};
-const M = [
-["Perro Pequeño",2.5,"Pan pequeño, salchicha nacional, lechuga, tomate, cebolla, queso amarillo, papitas y salsa","Perros"],
-["Perro Sencillo",3.5,"Pan grande, salchicha nacional, lechuga, tomate, cebolla, queso amarillo, papitas y salsa","Perros"],
-["Perro Especial",5,"Pan grande, salchicha nacional, lechuga, tomate, cebolla, jamón, queso amarillo, tocineta y huevo","Perros"],
-["Perro Polaco",8,"Pan grande, salchicha polaca, lechuga, tomate, cebolla, jamón, queso amarillo, tocineta y huevo","Perros"],
-["Hamburguesa Sencilla",6,"Pan, carne, lechuga, tomate, cebolla, papitas, queso amarillo","Hamburguesas"],
-["Hamburguesa de Carne",8,"Pan, carne, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
-["Hamburguesa de Pollo",8,"Pan, pollo pechuga, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
-["Hamburguesa Chuleta",8,"Pan, chuleta ahumada, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
-["Hamburguesa Doble o Mixta",15,"Pan, dos proteínas de preferencia, lechuga, tomate, cebolla, papitas, tocineta, jamón, queso americano y huevo","Hamburguesas"],
-["Hamburguesa Crispy",null,"Pollo frito empanizado, lechuga, tomate, cebolla, tocineta, jamón, queso amarillo y papitas fritas","Hamburguesas"],
-["Enrollado Carne",20,"Carne, jamón, queso, tocineta, lechuga, tomate, cebolla, papitas y huevo","Enrollados"],
-["Enrollado Pollo",20,"Pollo, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas","Enrollados"],
-["Enrollado Mixto",20,"Carne y pollo, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas","Enrollados"],
-["Pepito Mixto",25,"Carne y pollo, jamón, queso, tocineta, huevo, lechuga, tomate, cebolla y papitas","Enrollados"],
-["Mini Pepito",10,"Carne, vegetales, papita, tocineta y queso amarillo","Enrollados"],
-["Salchipapa",15,"","Especiales"],
-["Sandwich Granjero",null,"Pan tipo granjero, lechuga, tomate, cebolla, pollo, queso amarillo y papitas fritas","Especiales"],
-["Club House",12,"Pollo, lechuga, tomate, cebolla, jamón, huevo, queso amarillo y papas fritas","Especiales"],
-["Ración Papa 500gr",5,"","Extras"],
-["Ración Papa 250gr",2.5,"","Extras"],
-["Ración Tequeños",null,"","Extras"],
-["Nestea",2,"","Bebidas"],
-["Refresco Botellita",1,"","Bebidas"],
-["Refresco 1.0L",2,"","Bebidas"]
-];
-const RM = ["lechuga","tomate","cebolla","salsa","papitas","huevo","tocineta","jamón","queso","vegetales"];
-let cat = "Todos", open = null, cart = [], mode = "d", pay = "";
-
-const money = n => n == null ? "Consultar" : "$" + n.toFixed(2);
-const custom = i => M[i][2] && ["Perros","Hamburguesas","Enrollados","Especiales"].includes(M[i][3]);
-const $ = id => document.getElementById(id);
-
-function rCats(){
-  $("cats").innerHTML = CATS.map(c => `<button class="chip ${c[0]==cat?"on":""}" onclick="setCat('${c[0]}')">${c[1]} ${c[0]}</button>`).join("");
-}
-function setCat(c){ cat = c; open = null; rCats(); rList(); }
-
-function rList(){
-  let h = "";
-  M.forEach((m, i) => {
-    if (cat != "Todos" && m[3] != cat) return;
-    h += `<div class="card"><div class="row">
-      <div class="emo">${EMO[m[3]]}</div>
-      <div style="flex:1;min-width:0"><p class="name">${m[0]}</p>${m[2] ? `<p class="desc">${m[2]}</p>` : ""}</div>
-      <div style="text-align:right"><div class="price">${money(m[1])}</div>
-      <button class="btn add" onclick="tap(${i})">➕ Agregar</button></div></div>`;
-    if (open === i){
-      const d = m[2].toLowerCase();
-      const opts = RM.filter(r => d.includes(r));
-      h += `<div class="opt"><p class="name" style="font-size:14px">✨ ¿Cómo lo quieres?</p>`;
-      if (m[0].includes("Doble")) h += `<span class="lbl">🥩 Elige tus 2 proteínas</span><div class="seg">
-        <select id="p1"><option>Carne</option><option>Pollo</option><option>Chuleta</option></select>
-        <select id="p2"><option>Carne</option><option selected>Pollo</option><option>Chuleta</option></select></div>`;
-      if (opts.length) h += `<span class="lbl">❌ Quitar ingredientes</span>` + opts.map(o => `<label class="ck"><input type="checkbox" class="sx" value="${o}"> Sin ${o}</label>`).join("");
-      h += `<span class="lbl">📝 Nota especial</span><input type="text" id="nt" placeholder="Bien tostado, salsa aparte...">
-        <div class="seg" style="margin-top:10px"><button class="btn" onclick="open=null;rList()">Cancelar</button>
-        <button class="btn add" style="margin-top:0" onclick="add(${i})">Añadir al carrito</button></div></div>`;
+def agregar_item(item_id, item_nombre, item_precio):
+    actual = st.session_state["carrito"].get(item_id, {"cantidad": 0, "especificaciones": ""})
+    nueva_cant = actual["cantidad"] + 1
+    st.session_state["carrito"][item_id] = {
+        "nombre": item_nombre,
+        "precio": item_precio,
+        "cantidad": nueva_cant,
+        "subtotal": nueva_cant * item_precio,
+        "especificaciones": actual.get("especificaciones", "").strip() or "Estándar (Con todo)",
     }
-    h += `</div>`;
-  });
-  $("list").innerHTML = h;
-}
 
-function tap(i){ if (custom(i)){ open = open === i ? null : i; rList(); } else add(i); }
+def quitar_item(item_id):
+    if item_id in st.session_state["carrito"]:
+        actual = st.session_state["carrito"][item_id]
+        if actual["cantidad"] > 1:
+            nueva_cant = actual["cantidad"] - 1
+            st.session_state["carrito"][item_id]["cantidad"] = nueva_cant
+            st.session_state["carrito"][item_id]["subtotal"] = nueva_cant * actual["precio"]
+        else:
+            del st.session_state["carrito"][item_id]
 
-function add(i){
-  let sin = [], prot = null, note = "";
-  if (open === i){
-    sin = [...document.querySelectorAll(".sx:checked")].map(x => x.value);
-    if ($("p1")) prot = $("p1").value + " + " + $("p2").value;
-    note = $("nt").value.trim();
-  }
-  const key = JSON.stringify([i, sin, prot, note]);
-  const ex = cart.find(c => c.k == key);
-  if (ex) ex.q++; else cart.push({k:key, i, q:1, sin, prot, note});
-  open = null; rList(); rCart(); clr();
-}
+def actualizar_especificaciones(item_id, notas):
+    if item_id in st.session_state["carrito"]:
+        st.session_state["carrito"][item_id]["especificaciones"] = notas.strip() if notas else "Estándar (Con todo)"
 
-function qty(n, d){ cart[n].q += d; if (cart[n].q < 1) cart.splice(n, 1); rCart(); }
-const sub = () => cart.reduce((s, c) => s + (M[c.i][1] || 0) * c.q, 0);
+# ---------------------------------------------------------
+# HEADER
+# ---------------------------------------------------------
+logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
 
-function rCart(){
-  const count = cart.reduce((s, c) => s + c.q, 0);
-  const s = sub(), fee = mode == "d" && cart.length ? FEE : 0;
-  $("bar").style.display = count ? "flex" : "none";
-  $("bar").innerHTML = `<span>🛒 Ver carrito (${count})</span><span>$${(s + fee).toFixed(2)}</span>`;
-  $("cart").innerHTML = !cart.length ? `<p class="desc">Agrega algo rico del menú para empezar 😋</p>` :
-    cart.map((c, n) => {
-      const m = M[c.i];
-      const det = [c.prot ? "Proteínas: " + c.prot : "", ...c.sin.map(x => "Sin " + x), c.note ? "Nota: " + c.note : ""].filter(Boolean).join(" · ");
-      return `<div class="line"><div style="flex:1;min-width:0"><p class="name" style="font-size:14px">${EMO[m[3]]} ${m[0]}</p>${det ? `<p class="desc">${det}</p>` : ""}</div>
-        <button class="btn q" onclick="qty(${n},-1)">−</button><b>${c.q}</b><button class="btn q" onclick="qty(${n},1)">+</button>
-        <span style="min-width:64px;text-align:right">${m[1] == null ? "Consultar" : "$" + (m[1] * c.q).toFixed(2)}</span></div>`;
-    }).join("");
-  const pend = cart.some(c => M[c.i][1] == null);
-  $("tot").innerHTML = `<div class="tot"><span>Subtotal</span><span>$${s.toFixed(2)}</span></div>
-    <div class="tot"><span>Delivery</span><span>$${fee.toFixed(2)}</span></div>
-    <div class="tot big"><span>Total</span><span>$${(s + fee).toFixed(2)}</span></div>
-    ${pend ? `<p class="desc">⚠️ Algunos productos tienen precio por confirmar.</p>` : ""}`;
-}
+col_h_logo, col_h_info = st.columns([1, 4])
+with col_h_logo:
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_container_width=True)
+    else:
+        st.markdown("# 🍔")
 
-function setMode(m){
-  mode = m;
-  $("m_d").className = "btn" + (m == "d" ? " on" : "");
-  $("m_r").className = "btn" + (m == "r" ? " on" : "");
-  $("adwrap").style.display = m == "d" ? "block" : "none";
-  rCart(); clr();
-}
+with col_h_info:
+    st.title(NOMBRE_NEGOCIO)
+    st.caption(f"{ESLOGAN} | 📸 Instagram: @{INSTAGRAM}")
 
-function setPay(p){
-  pay = p;
-  $("p_pm").className = "btn" + (p == "pm" ? " on" : "");
-  $("p_bn").className = "btn" + (p == "bn" ? " on" : "");
-  $("payinfo").innerHTML = p == "pm"
-    ? `<div class="pay"><b>📱 Pago móvil · Banesco</b><br>Teléfono: 04249367077<br>Cédula: 20505294</div>`
-    : `<div class="pay"><b>🪙 Binance</b><br>Hugo_victor_17@hotmail.com</div>`;
-  clr();
-}
+st.divider()
 
-function clr(){ $("err").textContent = ""; }
+# ---------------------------------------------------------
+# COLUMNAS: MENÚ (IZQ) Y PEDIDO (DER)
+# ---------------------------------------------------------
+col_menu, col_order = st.columns([1.6, 1.1], gap="large")
 
-function send(){
-  const n = $("f_n").value.trim(), t = $("f_t").value.trim(), a = $("f_a").value.trim(), e = $("err");
-  if (!cart.length) return e.textContent = "Agrega al menos un producto.";
-  if (!n) return e.textContent = "Escribe tu nombre.";
-  if (!t) return e.textContent = "Escribe tu teléfono.";
-  if (mode == "d" && !a) return e.textContent = "Escribe la dirección de entrega.";
-  if (!pay) return e.textContent = "Elige un método de pago.";
-  saveData();
+# =========================================================
+# MENÚ DE PLATILLOS (NATIVO STREAMLIT)
+# =========================================================
+with col_menu:
+    st.subheader("🔥 Menú Digital")
 
-  const id = Math.floor(1000 + Math.random() * 9000), s = sub(), fee = mode == "d" ? FEE : 0;
-  const L = [
-    "🍔 *VICTOR'S FAST FOOD* 🌭",
-    "🧾 *Pedido #" + id + "*",
-    "━━━━━━━━━━━━━━",
-    "👤 *Cliente:* " + n,
-    "📞 *Teléfono:* " + t,
-    mode == "d" ? "🛵 *Entrega:* Delivery\n📍 *Dirección:* " + a : "🏪 *Entrega:* Retiro en el local",
-    "━━━━━━━━━━━━━━"
-  ];
-  cart.forEach(c => {
-    const m = M[c.i];
-    L.push(EMO[m[3]] + " *" + c.q + "x " + m[0] + "* — " + (m[1] == null ? "Precio a consultar" : "$" + (m[1] * c.q).toFixed(2)));
-    if (c.prot) L.push("   🥩 Proteínas: " + c.prot);
-    c.sin.forEach(x => L.push("   ❌ Sin " + x));
-    if (c.note) L.push("   📝 " + c.note);
-  });
-  L.push("━━━━━━━━━━━━━━", "💵 Subtotal: $" + s.toFixed(2), "🛵 Delivery: $" + fee.toFixed(2), "💰 *TOTAL: $" + (s + fee).toFixed(2) + "*");
-  if (cart.some(c => M[c.i][1] == null)) L.push("⚠️ Incluye productos con precio por confirmar");
-  L.push("━━━━━━━━━━━━━━",
-    pay == "pm" ? "💳 *Pago:* Pago móvil Banesco\n04249367077 · CI 20505294" : "💳 *Pago:* Binance\nHugo_victor_17@hotmail.com",
-    "📸 Enviaré el comprobante de pago por aquí.");
+    nombres_tabs = [cat["nombre"] for cat in CATEGORIAS]
+    tabs = st.tabs(nombres_tabs)
 
-  const msg = L.join("\n");
-  const url = "https://wa.me/" + WA + "?text=" + encodeURIComponent(msg);
-  $("prev").innerHTML = `<div class="pay"><b>🧾 Tu ticket</b><pre>${msg.replace(/</g, "&lt;")}</pre></div>
-    <a class="wa" href="${url}" target="_blank">Si WhatsApp no se abrió, toca aquí 💬</a>`;
-  if (WA.includes("X")) return e.textContent = "Falta configurar el número de WhatsApp del local.";
-  window.open(url, "_blank");
-}
+    for i, tab in enumerate(tabs):
+        cat_id = CATEGORIAS[i]["id"]
+        with tab:
+            platillos = MENU_ITEMS if cat_id == "todos" else [p for p in MENU_ITEMS if p["categoria"] == cat_id]
 
-function saveData(){
-  try {
-    if ($("remember").checked){
-      localStorage.setItem("vff_cliente", JSON.stringify({
-        n: $("f_n").value.trim(),
-        t: $("f_t").value.trim(),
-        a: $("f_a").value.trim()
-      }));
-    } else {
-      localStorage.removeItem("vff_cliente");
-    }
-  } catch (err) {}
-}
+            c_left, c_right = st.columns(2)
+            for idx, plato in enumerate(platillos):
+                target_col = c_left if idx % 2 == 0 else c_right
 
-function loadData(){
-  try {
-    const d = JSON.parse(localStorage.getItem("vff_cliente") || "null");
-    if (d){
-      $("f_n").value = d.n || "";
-      $("f_t").value = d.t || "";
-      $("f_a").value = d.a || "";
-    }
-  } catch (err) {}
-}
+                with target_col:
+                    pid = plato["id"]
+                    p_nombre = plato["nombre"]
+                    p_precio = plato["precio"]
+                    p_desc = plato["descripcion"]
+                    p_badge = plato["badge"]
+                    p_emoji = plato["emoji"]
 
-rCats(); rList(); rCart(); loadData();
-</script>
-"""
+                    item_en_carrito = st.session_state["carrito"].get(pid, {})
+                    qty_actual = item_en_carrito.get("cantidad", 0)
 
-html = (
-    HTML.replace("__WA__", WHATSAPP)
-    .replace("__DIR__", DIRECCION)
-    .replace("__FEE__", str(DELIVERY_FEE))
-    .replace("__LOGO__", logo_html)
-)
+                    # Contenedor con borde nativo
+                    with st.container(border=True):
+                        st.markdown(f"### {p_emoji} {p_nombre}")
+                        st.markdown(f"<span class='badge-tag'>{p_badge}</span>", unsafe_allow_html=True)
+                        st.write(p_desc)
+                        st.markdown(f"<div class='price-tag'>${p_precio:.2f}</div>", unsafe_allow_html=True)
 
-components.html(html, height=2600, scrolling=True)
+                        if qty_actual == 0:
+                            if st.button(f"⚡ AGREGAR +${p_precio:.2f}", key=f"add_{cat_id}_{pid}", use_container_width=True):
+                                agregar_item(pid, p_nombre, p_precio)
+                                st.rerun()
+                        else:
+                            st.success(f"✓ {qty_actual} en pedido")
+                            c_sub, c_add = st.columns(2)
+                            with c_sub:
+                                if st.button("➖ Quitar", key=f"sub_{cat_id}_{pid}", use_container_width=True):
+                                    quitar_item(pid)
+                                    st.rerun()
+                            with c_add:
+                                if st.button("➕ Sumar", key=f"sum_{cat_id}_{pid}", use_container_width=True):
+                                    agregar_item(pid, p_nombre, p_precio)
+                                    st.rerun()
+
+                            specs = st.text_input(
+                                "Detalles (ej. sin cebolla):",
+                                value=item_en_carrito.get("especificaciones", ""),
+                                key=f"spec_{cat_id}_{pid}"
+                            )
+                            if specs != item_en_carrito.get("especificaciones", ""):
+                                actualizar_especificaciones(pid, specs)
+
+# =========================================================
+# CARRITO Y CHECKOUT
+# =========================================================
+with col_order:
+    st.subheader("⚡ Tu Pedido")
+
+    carrito = st.session_state["carrito"]
+
+    if not carrito:
+        st.info("Tu orden está vacía. Agrega platillos desde el menú.")
+    else:
+        subtotal_orden = sum(d["subtotal"] for d in carrito.values())
+
+        for pid, datos in list(carrito.items()):
+            with st.container(border=True):
+                st.write(f"**{datos['cantidad']}x {datos['nombre']}** — ${datos['subtotal']:.2f}")
+                st.caption(f"📝 {datos['especificaciones']}")
+
+        if st.button("🗑️ Vaciar Pedido", use_container_width=True):
+            st.session_state["carrito"] = {}
+            st.rerun()
+
+        st.divider()
+
+        # Configuración de Entrega
+        modalidad = st.radio(
+            "Tipo de Entrega:",
+            [f"🛵 Delivery (+${DELIVERY_FEE:.2f})", "🏃 Pick-Up / Retiro", "🍽️ Comer en el Local"],
+            key="mod_entrega"
+        )
+
+        costo_envio = DELIVERY_FEE if "Delivery" in modalidad else 0.0
+        if "Delivery" in modalidad:
+            direccion_entrega = st.text_area("Dirección exacta:", key="dir_envio")
+        elif "Local" in modalidad:
+            direccion_entrega = st.text_input("Número de Mesa:", key="mesa_envio")
+        else:
+            direccion_entrega = "Retiro directo en local"
+
+        # Métodos de Pago
+        metodo_pago = st.radio("Método de Pago:", ["📱 Pago Móvil", "🟡 Binance Pay", "💵 Efectivo ($ USD)"], key="met_pago")
+
+        referencia_pago = ""
+        if "Pago Móvil" in metodo_pago:
+            pm = DATOS_PAGO["pago_movil"]
+            st.info(f"**Pago Móvil Banesco**\n- Teléfono: {pm['telefono']}\n- Cédula: {pm['cedula']}\n- Titular: {pm['titular']}")
+            referencia_pago = st.text_input("Número de Referencia:", key="ref_pm")
+        elif "Binance" in metodo_pago:
+            st.info(f"**Binance Pay**\nCorreo: {DATOS_PAGO['binance']['email']}")
+            referencia_pago = st.text_input("ID / Correo Binance:", key="ref_bn")
+        else:
+            st.info(DATOS_PAGO['efectivo']['detalle'])
+            referencia_pago = st.text_input("Denominación del billete (para cambio):", key="ref_ef")
+
+        # Datos del cliente
+        cliente_nombre = st.text_input("Nombre Completo:", key="cli_nom")
+        cliente_telefono = st.text_input("Teléfono de Contacto:", key="cli_tel")
+
+        total_final = subtotal_orden + costo_envio
+
+        st.markdown(f"### Total: **${total_final:.2f}**")
+
+        # Validación
+        listo = True
+        if not cliente_nombre:
+            st.warning("Escribe tu nombre.")
+            listo = False
+        elif "Delivery" in modalidad and not direccion_entrega:
+            st.warning("Indica la dirección de entrega.")
+            listo = False
+
+        if listo:
+            ticket_msg = f"🧾 *TICKET DE PEDIDO — {NOMBRE_NEGOCIO.upper()}*\n"
+            ticket_msg += f"👤 Cliente: {cliente_nombre}\n"
+            ticket_msg += f"📱 Teléfono: {cliente_telefono}\n"
+            ticket_msg += f"📍 Modo: {modalidad}\n"
+            ticket_msg += f"🏠 Destino: {direccion_entrega}\n"
+            ticket_msg += "--------------------------------\n"
+            for datos in carrito.values():
+                ticket_msg += f"• {datos['cantidad']}x {datos['nombre']} (${datos['subtotal']:.2f})\n"
+                ticket_msg += f"  Notas: {datos['especificaciones']}\n"
+            ticket_msg += "--------------------------------\n"
+            ticket_msg += f"Subtotal: ${subtotal_orden:.2f}\n"
+            ticket_msg += f"Delivery: ${costo_envio:.2f}\n"
+            ticket_msg += f"*TOTAL: ${total_final:.2f}*\n"
+            ticket_msg += f"Pago: {metodo_pago} (Ref/Detalle: {referencia_pago})\n"
+
+            url_wa = f"https://api.whatsapp.com/send?phone={WHATSAPP_PHONE}&text={urllib.parse.quote(ticket_msg)}"
+
+            st.markdown(
+                f"""
+                <a href="{url_wa}" target="_blank" class="wa-btn">
+                    📲 TRANSMITIR PEDIDO POR WHATSAPP
+                </a>
+                """,
+                unsafe_allow_html=True
+            )
