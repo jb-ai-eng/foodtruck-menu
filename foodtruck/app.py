@@ -1,18 +1,16 @@
 import os
-import textwrap
 import urllib.parse
 from datetime import datetime
 import streamlit as st
 
 # =========================================================
-# CONFIGURACIÓN DEL NEGOCIO & DATOS REALES
+# CONFIGURACIÓN DEL NEGOCIO
 # =========================================================
 NOMBRE_NEGOCIO = "Victor's Fast Food"
-ESLOGAN = "⚡ High-Performance Street Food | Sabor Urbano Premium"
-INSTAGRAM = "victorsfast_food"
+INSTAGRAM_HANDLE = "victorsfast_food"
+INSTAGRAM_URL = "https://www.instagram.com/victorsfast_food/"
 WHATSAPP_PHONE = "584249367077"
 DELIVERY_FEE = 3.00
-DIRECCION_LOCAL = "Food Truck Victor's Fast Food — Punto Central"
 
 DATOS_PAGO = {
     "pago_movil": {
@@ -103,7 +101,7 @@ MENU_ITEMS = [
         "nombre": "Perro Pequeño",
         "precio": 2.50,
         "descripcion": "Pan suave, salchicha nacional, lechuga, tomate picadito, cebolla, queso amarillo, papitas y salsa de la casa.",
-        "badge": "🥖 Street Style",
+        "badge": "🥖 Clásico",
         "emoji": "🌭"
     },
     {
@@ -273,68 +271,104 @@ MENU_ITEMS = [
 # CONFIGURACIÓN DE PÁGINA
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title=f"{NOMBRE_NEGOCIO} | Digital Ordering Terminal",
+    page_title=f"{NOMBRE_NEGOCIO} | Pedidos",
     page_icon="🍔",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# Estilos CSS globales
+# ---------------------------------------------------------
+# ESTILOS CSS CON COLORES OFICIALES DEL LOGO
+# ---------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Outfit:wght@600;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: 'Poppins', sans-serif;
     }
 
+    /* Fondo Dark de la Marca */
     .stApp {
-        background: #08090C;
+        background-color: #0A0A0A;
         color: #FFFFFF;
     }
 
     header, footer {visibility: hidden;}
 
-    /* Badge visuales */
+    /* Contenedor del Header */
+    .header-box {
+        text-align: center;
+        padding: 10px 0 20px 0;
+    }
+
+    /* Botón Instagram con Gradiente Oficial */
+    .ig-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        color: #FFFFFF !important;
+        padding: 8px 18px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(220, 39, 67, 0.4);
+        transition: transform 0.2s ease;
+        margin-top: 10px;
+    }
+
+    .ig-button:hover {
+        transform: scale(1.05);
+    }
+
+    /* Badges con Amarillo y Rojo del Logo */
     .badge-tag {
-        background: rgba(229, 37, 33, 0.2);
-        border: 1px solid #E52521;
+        background-color: rgba(229, 27, 36, 0.15);
+        border: 1px solid #E51B24;
         color: #FF5A50;
-        padding: 2px 8px;
+        padding: 3px 10px;
         border-radius: 12px;
         font-size: 11px;
         font-weight: 700;
         display: inline-block;
+        margin-bottom: 6px;
     }
 
     .price-tag {
-        font-family: 'Outfit', sans-serif;
         font-size: 22px;
         font-weight: 900;
-        color: #FFD000;
+        color: #FFC72C;
+        margin-top: 4px;
     }
 
-    /* Botón de envío a WhatsApp */
+    /* Botón de Enviar Pedido por WhatsApp */
     .wa-btn {
         display: block;
         width: 100%;
         text-align: center;
-        background: #25D366;
-        color: #000000 !important;
-        font-family: 'Outfit', sans-serif;
+        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+        color: #FFFFFF !important;
         font-weight: 900;
-        font-size: 16px;
-        padding: 14px 20px;
-        border-radius: 14px;
+        font-size: 17px;
+        padding: 16px;
+        border-radius: 16px;
         text-decoration: none;
         margin-top: 15px;
         text-transform: uppercase;
-        box-shadow: 0 5px 20px rgba(37, 211, 102, 0.4);
+        box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
     }
+
     .wa-btn:hover {
-        background: #20ba5a;
-        color: #FFFFFF !important;
+        transform: translateY(-2px);
+    }
+
+    /* Estilos para botones nativos */
+    div.stButton > button {
+        border-radius: 12px !important;
+        font-weight: 700 !important;
     }
     </style>
     """,
@@ -342,7 +376,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# ESTADO REACTIVO DEL CARRITO
+# ESTADO DEL CARRITO
 # ---------------------------------------------------------
 if "carrito" not in st.session_state:
     st.session_state["carrito"] = {}
@@ -355,7 +389,7 @@ def agregar_item(item_id, item_nombre, item_precio):
         "precio": item_precio,
         "cantidad": nueva_cant,
         "subtotal": nueva_cant * item_precio,
-        "especificaciones": actual.get("especificaciones", "").strip() or "Estándar (Con todo)",
+        "especificaciones": actual.get("especificaciones", "").strip() or "Con todo",
     }
 
 def quitar_item(item_id):
@@ -370,42 +404,61 @@ def quitar_item(item_id):
 
 def actualizar_especificaciones(item_id, notas):
     if item_id in st.session_state["carrito"]:
-        st.session_state["carrito"][item_id]["especificaciones"] = notas.strip() if notas else "Estándar (Con todo)"
+        st.session_state["carrito"][item_id]["especificaciones"] = notas.strip() if notas else "Con todo"
 
 # ---------------------------------------------------------
-# HEADER
+# HEADER CON LOGO Y BOTÓN DE INSTAGRAM
 # ---------------------------------------------------------
-logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+base_dir = os.path.dirname(__file__)
+logo_path = None
+for posible in [
+    os.path.join(base_dir, "assets", "logo.jpg"),
+    os.path.join(base_dir, "assets", "logo.png"),
+    os.path.join(base_dir, "logo.jpg"),
+    os.path.join(base_dir, "logo.png"),
+]:
+    if os.path.exists(posible):
+        logo_path = posible
+        break
 
-col_h_logo, col_h_info = st.columns([1, 4])
-with col_h_logo:
-    if os.path.exists(logo_path):
+col_l, col_c, col_r = st.columns([1, 2, 1])
+with col_c:
+    if logo_path:
         st.image(logo_path, use_container_width=True)
     else:
-        st.markdown("# 🍔")
+        st.markdown(f"<h1 style='text-align:center; color:#FFC72C;'>{NOMBRE_NEGOCIO}</h1>", unsafe_allow_html=True)
 
-with col_h_info:
-    st.title(NOMBRE_NEGOCIO)
-    st.caption(f"{ESLOGAN} | 📸 Instagram: @{INSTAGRAM}")
+    st.markdown(
+        f"""
+        <div style="text-align: center; margin-top: -10px; margin-bottom: 20px;">
+            <a href="{INSTAGRAM_URL}" target="_blank" class="ig-button">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                @{INSTAGRAM_HANDLE}
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.divider()
 
 # ---------------------------------------------------------
-# COLUMNAS: MENÚ (IZQ) Y PEDIDO (DER)
+# ESTRUCTURA PRINCIPAL: CATÁLOGO Y PROCESO DE PAGO
 # ---------------------------------------------------------
 col_menu, col_order = st.columns([1.6, 1.1], gap="large")
 
 # =========================================================
-# MENÚ DE PLATILLOS (NATIVO STREAMLIT)
+# COLUMNA IZQUIERDA: CATÁLOGO
 # =========================================================
 with col_menu:
-    st.subheader("🔥 Menú Digital")
+    st.markdown("<h2 style='color:#FFC72C;'>🔥 Menú de Platillos</h2>", unsafe_allow_html=True)
 
-    nombres_tabs = [cat["nombre"] for cat in CATEGORIAS]
-    tabs = st.tabs(nombres_tabs)
+    tabs = st.tabs([c["nombre"] for c in CATEGORIAS])
 
-    for i, tab in enumerate(tabs):
-        cat_id = CATEGORIAS[i]["id"]
+    for idx_tab, tab in enumerate(tabs):
+        cat_id = CATEGORIAS[idx_tab]["id"]
         with tab:
             platillos = MENU_ITEMS if cat_id == "todos" else [p for p in MENU_ITEMS if p["categoria"] == cat_id]
 
@@ -424,31 +477,30 @@ with col_menu:
                     item_en_carrito = st.session_state["carrito"].get(pid, {})
                     qty_actual = item_en_carrito.get("cantidad", 0)
 
-                    # Contenedor con borde nativo
                     with st.container(border=True):
-                        st.markdown(f"### {p_emoji} {p_nombre}")
+                        st.markdown(f"#### {p_emoji} {p_nombre}")
                         st.markdown(f"<span class='badge-tag'>{p_badge}</span>", unsafe_allow_html=True)
-                        st.write(p_desc)
+                        st.caption(p_desc)
                         st.markdown(f"<div class='price-tag'>${p_precio:.2f}</div>", unsafe_allow_html=True)
 
                         if qty_actual == 0:
-                            if st.button(f"⚡ AGREGAR +${p_precio:.2f}", key=f"add_{cat_id}_{pid}", use_container_width=True):
+                            if st.button(f"➕ Agregar", key=f"add_{cat_id}_{pid}", use_container_width=True):
                                 agregar_item(pid, p_nombre, p_precio)
                                 st.rerun()
                         else:
-                            st.success(f"✓ {qty_actual} en pedido")
+                            st.success(f"✓ {qty_actual} en el carrito")
                             c_sub, c_add = st.columns(2)
                             with c_sub:
                                 if st.button("➖ Quitar", key=f"sub_{cat_id}_{pid}", use_container_width=True):
                                     quitar_item(pid)
                                     st.rerun()
                             with c_add:
-                                if st.button("➕ Sumar", key=f"sum_{cat_id}_{pid}", use_container_width=True):
+                                if st.button("➕ Más", key=f"sum_{cat_id}_{pid}", use_container_width=True):
                                     agregar_item(pid, p_nombre, p_precio)
                                     st.rerun()
 
                             specs = st.text_input(
-                                "Detalles (ej. sin cebolla):",
+                                "Instrucciones (ej. sin cebolla):",
                                 value=item_en_carrito.get("especificaciones", ""),
                                 key=f"spec_{cat_id}_{pid}"
                             )
@@ -456,98 +508,130 @@ with col_menu:
                                 actualizar_especificaciones(pid, specs)
 
 # =========================================================
-# CARRITO Y CHECKOUT
+# COLUMNA DERECHA: CARRITO Y PAGO
 # =========================================================
 with col_order:
-    st.subheader("⚡ Tu Pedido")
+    st.markdown("<h2 style='color:#FFC72C;'>🛒 Tu Carrito</h2>", unsafe_allow_html=True)
 
     carrito = st.session_state["carrito"]
 
     if not carrito:
-        st.info("Tu orden está vacía. Agrega platillos desde el menú.")
+        st.info("Tu carrito está vacío. Elige tus platillos favoritos del menú.")
     else:
         subtotal_orden = sum(d["subtotal"] for d in carrito.values())
+        cant_total = sum(d["cantidad"] for d in carrito.values())
 
+        # Desglose de productos agregados
         for pid, datos in list(carrito.items()):
             with st.container(border=True):
-                st.write(f"**{datos['cantidad']}x {datos['nombre']}** — ${datos['subtotal']:.2f}")
-                st.caption(f"📝 {datos['especificaciones']}")
+                c_text, c_del = st.columns([4, 1])
+                with c_text:
+                    st.markdown(f"**{datos['cantidad']}x {datos['nombre']}**")
+                    st.markdown(f"<span style='color:#FFC72C; font-weight:700;'>${datos['subtotal']:.2f}</span>", unsafe_allow_html=True)
+                    st.caption(f"📝 {datos['especificaciones']}")
+                with c_del:
+                    if st.button("❌", key=f"del_cart_{pid}"):
+                        del st.session_state["carrito"][pid]
+                        st.rerun()
 
-        if st.button("🗑️ Vaciar Pedido", use_container_width=True):
+        if st.button("🗑️ Vaciar Carrito", use_container_width=True):
             st.session_state["carrito"] = {}
             st.rerun()
 
         st.divider()
 
-        # Configuración de Entrega
+        # 1. Forma de Entrega
+        st.markdown("<h4 style='color:#FFC72C;'>1. Selección de Entrega</h4>", unsafe_allow_html=True)
         modalidad = st.radio(
-            "Tipo de Entrega:",
-            [f"🛵 Delivery (+${DELIVERY_FEE:.2f})", "🏃 Pick-Up / Retiro", "🍽️ Comer en el Local"],
+            "¿Cómo deseas recibir tu pedido?:",
+            [f"🛵 Delivery (+${DELIVERY_FEE:.2f})", "🏃 Retiro en Local", "🍽️ Comer en el Food Truck"],
             key="mod_entrega"
         )
 
         costo_envio = DELIVERY_FEE if "Delivery" in modalidad else 0.0
         if "Delivery" in modalidad:
-            direccion_entrega = st.text_area("Dirección exacta:", key="dir_envio")
-        elif "Local" in modalidad:
+            direccion_entrega = st.text_area("Dirección exacta con punto de referencia:", key="dir_envio")
+        elif "Food Truck" in modalidad:
             direccion_entrega = st.text_input("Número de Mesa:", key="mesa_envio")
         else:
             direccion_entrega = "Retiro directo en local"
 
-        # Métodos de Pago
-        metodo_pago = st.radio("Método de Pago:", ["📱 Pago Móvil", "🟡 Binance Pay", "💵 Efectivo ($ USD)"], key="met_pago")
+        # 2. Forma de Pago
+        st.markdown("<h4 style='color:#FFC72C;'>2. Método de Pago</h4>", unsafe_allow_html=True)
+        metodo_pago = st.radio("Elige cómo vas a pagar:", ["📱 Pago Móvil (Banesco)", "🟡 Binance Pay", "💵 Efectivo ($ USD)"], key="met_pago")
 
         referencia_pago = ""
         if "Pago Móvil" in metodo_pago:
             pm = DATOS_PAGO["pago_movil"]
-            st.info(f"**Pago Móvil Banesco**\n- Teléfono: {pm['telefono']}\n- Cédula: {pm['cedula']}\n- Titular: {pm['titular']}")
-            referencia_pago = st.text_input("Número de Referencia:", key="ref_pm")
+            st.info(f"**Datos Pago Móvil Banesco:**\n- Teléfono: `{pm['telefono']}`\n- Cédula: `{pm['cedula']}`\n- Titular: {pm['titular']}")
+            referencia_pago = st.text_input("Número de Referencia / Comprobante:", key="ref_pm")
         elif "Binance" in metodo_pago:
-            st.info(f"**Binance Pay**\nCorreo: {DATOS_PAGO['binance']['email']}")
-            referencia_pago = st.text_input("ID / Correo Binance:", key="ref_bn")
+            st.info(f"**Datos Binance Pay:**\nCorreo: `{DATOS_PAGO['binance']['email']}`")
+            referencia_pago = st.text_input("ID o Correo de tu cuenta Binance:", key="ref_bn")
         else:
             st.info(DATOS_PAGO['efectivo']['detalle'])
-            referencia_pago = st.text_input("Denominación del billete (para cambio):", key="ref_ef")
+            referencia_pago = st.text_input("¿Con qué billete pagas? (ej. Billete de $20):", key="ref_ef")
 
-        # Datos del cliente
-        cliente_nombre = st.text_input("Nombre Completo:", key="cli_nom")
-        cliente_telefono = st.text_input("Teléfono de Contacto:", key="cli_tel")
+        # 3. Datos del Cliente
+        st.markdown("<h4 style='color:#FFC72C;'>3. Tu Información</h4>", unsafe_allow_html=True)
+        cliente_nombre = st.text_input("Nombre y Apellido:", key="cli_nom")
+        cliente_telefono = st.text_input("Teléfono WhatsApp:", key="cli_tel")
 
         total_final = subtotal_orden + costo_envio
 
-        st.markdown(f"### Total: **${total_final:.2f}**")
+        st.markdown(
+            f"""
+            <div style="background-color: #1A1A1A; padding: 15px; border-radius: 12px; border: 1px solid #E51B24; margin-top: 15px;">
+                <div style="display:flex; justify-style:space-between; color:#AAAAAA; font-size:14px;">
+                    <span>Subtotal:</span><span style="color:#FFF;">${subtotal_orden:.2f}</span>
+                </div>
+                <div style="display:flex; justify-style:space-between; color:#AAAAAA; font-size:14px;">
+                    <span>Delivery:</span><span style="color:#FFF;">${costo_envio:.2f}</span>
+                </div>
+                <hr style="border-color:#333;">
+                <div style="display:flex; justify-style:space-between; font-size:20px; font-weight:900; color:#FFC72C;">
+                    <span>TOTAL:</span><span>${total_final:.2f}</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         # Validación
         listo = True
         if not cliente_nombre:
-            st.warning("Escribe tu nombre.")
+            st.warning("⚠️ Por favor escribe tu nombre.")
             listo = False
         elif "Delivery" in modalidad and not direccion_entrega:
-            st.warning("Indica la dirección de entrega.")
+            st.warning("⚠️ Por favor indica la dirección para el Delivery.")
             listo = False
 
         if listo:
-            ticket_msg = f"🧾 *TICKET DE PEDIDO — {NOMBRE_NEGOCIO.upper()}*\n"
+            ticket_msg = f"🧾 *PEDIDO — {NOMBRE_NEGOCIO.upper()}*\n"
+            ticket_msg += f"📅 Fecha: {datetime.now().strftime('%d/%m/%Y %I:%M %p')}\n"
             ticket_msg += f"👤 Cliente: {cliente_nombre}\n"
             ticket_msg += f"📱 Teléfono: {cliente_telefono}\n"
             ticket_msg += f"📍 Modo: {modalidad}\n"
-            ticket_msg += f"🏠 Destino: {direccion_entrega}\n"
-            ticket_msg += "--------------------------------\n"
+            ticket_msg += f"🏠 Dirección/Mesa: {direccion_entrega}\n"
+            ticket_msg += "========================\n"
             for datos in carrito.values():
                 ticket_msg += f"• {datos['cantidad']}x {datos['nombre']} (${datos['subtotal']:.2f})\n"
-                ticket_msg += f"  Notas: {datos['especificaciones']}\n"
-            ticket_msg += "--------------------------------\n"
+                ticket_msg += f"  Nota: {datos['especificaciones']}\n"
+            ticket_msg += "========================\n"
             ticket_msg += f"Subtotal: ${subtotal_orden:.2f}\n"
-            ticket_msg += f"Delivery: ${costo_envio:.2f}\n"
-            ticket_msg += f"*TOTAL: ${total_final:.2f}*\n"
-            ticket_msg += f"Pago: {metodo_pago} (Ref/Detalle: {referencia_pago})\n"
+            if costo_envio > 0:
+                ticket_msg += f"Delivery: ${costo_envio:.2f}\n"
+            ticket_msg += f"*TOTAL A PAGAR: ${total_final:.2f}*\n"
+            ticket_msg += f"💳 Pago: {metodo_pago}\n"
+            if referencia_pago:
+                ticket_msg += f"Ref/Detalle: {referencia_pago}\n"
 
             url_wa = f"https://api.whatsapp.com/send?phone={WHATSAPP_PHONE}&text={urllib.parse.quote(ticket_msg)}"
 
             st.markdown(
                 f"""
                 <a href="{url_wa}" target="_blank" class="wa-btn">
-                    📲 TRANSMITIR PEDIDO POR WHATSAPP
+                    📲 ENVIAR PEDIDO A WHATSAPP
                 </a>
                 """,
                 unsafe_allow_html=True
