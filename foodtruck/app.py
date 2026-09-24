@@ -208,7 +208,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# BÚSQUEDA Y CODIFICACIÓN EN BASE64 DEL LOGO Y IMÁGENES
+# BÚSQUEDA Y CODIFICACIÓN EN BASE64 DEL LOGO DE FONDO
 # ---------------------------------------------------------
 base_dir = os.path.dirname(__file__)
 root_dir = os.path.abspath(os.path.join(base_dir, ".."))
@@ -402,13 +402,16 @@ with col_c:
 with st.expander("📸 Ver Fotos del Menú & Especialidades Oficiales", expanded=False):
     st.markdown("<p style='text-align:center; color:#AAA;'>Descubre nuestras especialidades reales recién hechas:</p>", unsafe_allow_html=True)
     
-    # Busca la foto tanto en la carpeta raíz como en assets
+    # Búsqueda ampliada que incluye la captura con el nombre exacto de la captura
     foto_comida_path = None
     for f_posible in [
-        os.path.join(root_dir, "fotos_comida.jpg"),
-        os.path.join(root_dir, "fotos_comida.png"),
+        os.path.join(base_dir, "Screenshot 2026-09-23 at 22.46.03.png"),
+        os.path.join(base_dir, "assets", "Screenshot 2026-09-23 at 22.46.03.png"),
+        os.path.join(root_dir, "foodtruck", "Screenshot 2026-09-23 at 22.46.03.png"),
+        os.path.join(root_dir, "Screenshot 2026-09-23 at 22.46.03.png"),
         os.path.join(base_dir, "fotos_comida.jpg"),
         os.path.join(base_dir, "assets", "fotos_comida.jpg"),
+        os.path.join(root_dir, "fotos_comida.jpg"),
     ]:
         if os.path.exists(f_posible):
             foto_comida_path = f_posible
@@ -417,7 +420,7 @@ with st.expander("📸 Ver Fotos del Menú & Especialidades Oficiales", expanded
     if foto_comida_path:
         st.image(foto_comida_path, caption="🍔 Hamburguesa Crispy · 🥪 Club House · 🌯 Pepito Mixto", use_container_width=True)
     else:
-        st.warning("Subiendo la vista previa de las imágenes...")
+        st.info("🍔 Cargando especialidades...")
 
     st.markdown(
         f"""
