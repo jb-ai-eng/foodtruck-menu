@@ -278,7 +278,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS CON COLORES OFICIALES DEL LOGO
+# ESTILOS CSS CON DEGRADADO DINÁMICO DE LA MARCA
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -289,15 +289,16 @@ st.markdown(
         font-family: 'Poppins', sans-serif;
     }
 
-    /* Fondo Dark de la Marca */
+    /* Fondo con degradado fluido (Negro, Rojo Ahumado y Destello Dorado) */
     .stApp {
-        background-color: #0A0A0A;
+        background: radial-gradient(circle at 50% 0%, #2A080A 0%, #120405 45%, #08080A 100%) !important;
+        background-attachment: fixed !important;
         color: #FFFFFF;
     }
 
     header, footer {visibility: hidden;}
 
-    /* Contenedor del Header */
+    /* Contenedor del Header con brillo ambiental */
     .header-box {
         text-align: center;
         padding: 10px 0 20px 0;
@@ -324,9 +325,17 @@ st.markdown(
         transform: scale(1.05);
     }
 
+    /* Tarjetas del Menú con cristal traslúcido */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(20, 20, 25, 0.75) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(229, 27, 36, 0.3) !important;
+        border-radius: 16px !important;
+    }
+
     /* Badges con Amarillo y Rojo del Logo */
     .badge-tag {
-        background-color: rgba(229, 27, 36, 0.15);
+        background-color: rgba(229, 27, 36, 0.2);
         border: 1px solid #E51B24;
         color: #FF5A50;
         padding: 3px 10px;
@@ -374,7 +383,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 # ---------------------------------------------------------
 # ESTADO DEL CARRITO
 # ---------------------------------------------------------
