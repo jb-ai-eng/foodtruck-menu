@@ -236,6 +236,9 @@ st.set_page_config(
 # ---------------------------------------------------------
 # ESTILOS CSS PERSONALIZADOS CON FUEGO Y CRISTAL
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# ESTILOS CSS CON LOGO DE FONDO & CRISTAL TRASLÚCIDO
+# ---------------------------------------------------------
 st.markdown(
     """
     <style>
@@ -245,60 +248,28 @@ st.markdown(
         font-family: 'Poppins', sans-serif;
     }
 
-    /* Fondo Degradado con colores de la marca */
+    /* Fondo con la imagen del logo expandida y superpuesta con capa oscura */
     .stApp {
-        background: radial-gradient(circle at 50% 0%, #2A080A 0%, #120405 45%, #08080A 100%) !important;
-        background-attachment: fixed !important;
+        background: linear-gradient(rgba(10, 10, 10, 0.82), rgba(10, 10, 10, 0.92)),
+                    url("logo.jpg") no-repeat center center fixed !important;
+        background-size: cover !important;
         color: #FFFFFF;
     }
 
     header, footer {visibility: hidden;}
 
-    /* Contenedores con efecto Cristal */
+    /* Tarjetas del Menú con cristal oscuro y borde rojo ahumado */
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(20, 20, 25, 0.75) !important;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(229, 27, 36, 0.3) !important;
+        background: rgba(15, 15, 20, 0.85) !important;
+        backdrop-filter: blur(12px) saturate(180%);
+        border: 1px solid rgba(229, 27, 36, 0.4) !important;
         border-radius: 18px !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
-    /* Botón Instagram */
-    .ig-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-        color: #FFFFFF !important;
-        padding: 10px 22px;
-        border-radius: 30px;
-        font-weight: 700;
-        font-size: 14px;
-        text-decoration: none;
-        box-shadow: 0 4px 15px rgba(220, 39, 67, 0.4);
-        transition: transform 0.2s ease;
-    }
-    .ig-button:hover { transform: scale(1.05); }
-
-    /* Botón Mapa */
-    .map-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(135deg, #E51B24 0%, #B30006 100%);
-        color: #FFFFFF !important;
-        padding: 10px 22px;
-        border-radius: 30px;
-        font-weight: 700;
-        font-size: 14px;
-        text-decoration: none;
-        box-shadow: 0 4px 15px rgba(229, 27, 36, 0.4);
-        transition: transform 0.2s ease;
-    }
-    .map-button:hover { transform: scale(1.05); }
-
-    /* Badges */
+    /* Badges de especialidad */
     .badge-tag {
-        background-color: rgba(229, 27, 36, 0.2);
+        background-color: rgba(229, 27, 36, 0.25);
         border: 1px solid #E51B24;
         color: #FF5A50;
         padding: 3px 10px;
@@ -316,7 +287,7 @@ st.markdown(
         margin-top: 4px;
     }
 
-    /* Botón WhatsApp */
+    /* Botón de Enviar Pedido por WhatsApp */
     .wa-btn {
         display: block;
         width: 100%;
@@ -332,7 +303,6 @@ st.markdown(
         text-transform: uppercase;
         box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
     }
-    .wa-btn:hover { transform: translateY(-2px); }
 
     div.stButton > button {
         border-radius: 12px !important;
