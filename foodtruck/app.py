@@ -1,4 +1,4 @@
-\import base64
+import base64
 import os
 import urllib.parse
 from datetime import datetime
