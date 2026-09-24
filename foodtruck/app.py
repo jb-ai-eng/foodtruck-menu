@@ -1,3 +1,4 @@
+\import base64
 import os
 import urllib.parse
 from datetime import datetime
@@ -234,41 +235,96 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS PERSONALIZADOS CON FUEGO Y CRISTAL
+# BÚSQUEDA Y CODIFICACIÓN EN BASE64 DE LA IMAGEN DE FONDO
 # ---------------------------------------------------------
+base_dir = os.path.dirname(__file__)
+logo_path = None
+for posible in [
+    os.path.join(base_dir, "assets", "logo.jpg"),
+    os.path.join(base_dir, "assets", "logo.png"),
+    os.path.join(base_dir, "logo.jpg"),
+    os.path.join(base_dir, "logo.png"),
+]:
+    if os.path.exists(posible):
+        logo_path = posible
+        break
+
+bg_css = "background-color: #0A0A0A;"
+if logo_path:
+    with open(logo_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    ext = "png" if logo_path.endswith(".png") else "jpeg"
+    bg_css = f"""
+        background: linear-gradient(rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.92)),
+                    url("data:image/{ext};base64,{encoded_string}") no-repeat center center fixed !important;
+        background-size: cover !important;
+    """
+
 # ---------------------------------------------------------
-# ESTILOS CSS CON LOGO DE FONDO & CRISTAL TRASLÚCIDO
+# ESTILOS CSS CON LOGO DE FONDO EN BASE64 & CRISTAL TRASLÚCIDO
 # ---------------------------------------------------------
 st.markdown(
-    """
+    f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
 
-    html, body, [class*="css"] {
+    html, body, [class*="css"] {{
         font-family: 'Poppins', sans-serif;
-    }
+    }}
 
-    /* Fondo con la imagen del logo expandida y superpuesta con capa oscura */
-    .stApp {
-        background: linear-gradient(rgba(10, 10, 10, 0.82), rgba(10, 10, 10, 0.92)),
-                    url("logo.jpg") no-repeat center center fixed !important;
-        background-size: cover !important;
+    /* Fondo con la imagen del logo en Base64 */
+    .stApp {{
+        {bg_css}
         color: #FFFFFF;
-    }
+    }}
 
-    header, footer {visibility: hidden;}
+    header, footer {{visibility: hidden;}}
 
-    /* Tarjetas del Menú con cristal oscuro y borde rojo ahumado */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    /* Tarjetas del Menú con cristal oscuro y borde rojo */
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
         background: rgba(15, 15, 20, 0.85) !important;
         backdrop-filter: blur(12px) saturate(180%);
         border: 1px solid rgba(229, 27, 36, 0.4) !important;
         border-radius: 18px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
+    }}
+
+    /* Botón Instagram */
+    .ig-button {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        color: #FFFFFF !important;
+        padding: 10px 22px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(220, 39, 67, 0.4);
+        transition: transform 0.2s ease;
+    }}
+    .ig-button:hover {{ transform: scale(1.05); }}
+
+    /* Botón Mapa */
+    .map-button {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #E51B24 0%, #B30006 100%);
+        color: #FFFFFF !important;
+        padding: 10px 22px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(229, 27, 36, 0.4);
+        transition: transform 0.2s ease;
+    }}
+    .map-button:hover {{ transform: scale(1.05); }}
 
     /* Badges de especialidad */
-    .badge-tag {
+    .badge-tag {{
         background-color: rgba(229, 27, 36, 0.25);
         border: 1px solid #E51B24;
         color: #FF5A50;
@@ -278,17 +334,17 @@ st.markdown(
         font-weight: 700;
         display: inline-block;
         margin-bottom: 6px;
-    }
+    }}
 
-    .price-tag {
+    .price-tag {{
         font-size: 22px;
         font-weight: 900;
         color: #FFC72C;
         margin-top: 4px;
-    }
+    }}
 
     /* Botón de Enviar Pedido por WhatsApp */
-    .wa-btn {
+    .wa-btn {{
         display: block;
         width: 100%;
         text-align: center;
@@ -302,12 +358,12 @@ st.markdown(
         margin-top: 15px;
         text-transform: uppercase;
         box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
-    }
+    }}
 
-    div.stButton > button {
+    div.stButton > button {{
         border-radius: 12px !important;
         font-weight: 700 !important;
-    }
+    }}
     </style>
     """,
     unsafe_allow_html=True
@@ -345,20 +401,8 @@ def actualizar_especificaciones(item_id, notas):
         st.session_state["carrito"][item_id]["especificaciones"] = notas.strip() if notas else "Con todo"
 
 # ---------------------------------------------------------
-# HEADER: LOGO, REDES Y UBICACIÓN
+# HEADER: LOGO ENCABEZADO, REDES Y UBICACIÓN
 # ---------------------------------------------------------
-base_dir = os.path.dirname(__file__)
-logo_path = None
-for posible in [
-    os.path.join(base_dir, "assets", "logo.jpg"),
-    os.path.join(base_dir, "assets", "logo.png"),
-    os.path.join(base_dir, "logo.jpg"),
-    os.path.join(base_dir, "logo.png"),
-]:
-    if os.path.exists(posible):
-        logo_path = posible
-        break
-
 col_l, col_c, col_r = st.columns([1, 2, 1])
 with col_c:
     if logo_path:
