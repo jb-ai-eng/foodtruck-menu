@@ -4,11 +4,12 @@ from datetime import datetime
 import streamlit as st
 
 # =========================================================
-# CONFIGURACIÓN DEL NEGOCIO
+# CONFIGURACIÓN DEL NEGOCIO Y ENLACES OFICIALES
 # =========================================================
 NOMBRE_NEGOCIO = "Victor's Fast Food"
 INSTAGRAM_HANDLE = "victorsfast_food"
 INSTAGRAM_URL = "https://www.instagram.com/victorsfast_food/"
+MAPS_URL = "https://maps.app.goo.gl/5bpuKC6FEBdsTkFM8"
 WHATSAPP_PHONE = "584249367077"
 DELIVERY_FEE = 3.00
 
@@ -169,15 +170,6 @@ MENU_ITEMS = [
         "badge": "👑 El Monstruo",
         "emoji": "🥖"
     },
-    {
-        "id": "mini_pepito",
-        "categoria": "enrollados",
-        "nombre": "Mini Pepito",
-        "precio": 10.00,
-        "descripcion": "Carne salteada, vegetales seleccionados, tocineta, queso amarillo y papitas en porción individual.",
-        "badge": "🎯 Personal",
-        "emoji": "🥖"
-    },
 
     # --- SANDWICHES & CLUB HOUSE ---
     {
@@ -189,15 +181,6 @@ MENU_ITEMS = [
         "badge": "🥪 4 Niveles",
         "emoji": "🥪"
     },
-    {
-        "id": "sand_granjero",
-        "categoria": "sandwiches",
-        "nombre": "Sandwich Granjero",
-        "precio": 10.00,
-        "descripcion": "Pan tipo granjero horneado, pechuga de pollo, lechuga, tomate, cebolla, queso amarillo y papas fritas.",
-        "badge": "🌾 Granjero",
-        "emoji": "🥪"
-    },
 
     # --- SALCHIPAPAS & EXTRAS ---
     {
@@ -207,24 +190,6 @@ MENU_ITEMS = [
         "precio": 15.00,
         "descripcion": "Montaña de papas fritas doradas, abundante salchicha en rodajas, lluvia de queso y baño de salsas.",
         "badge": "🍟 Para 2 o 3",
-        "emoji": "🍟"
-    },
-    {
-        "id": "papa_500",
-        "categoria": "extras",
-        "nombre": "Ración de Papa 500gr",
-        "precio": 5.00,
-        "descripcion": "Medio kilo de papas fritas premium crujientes al punto de sal.",
-        "badge": "🍟 Familiar",
-        "emoji": "🍟"
-    },
-    {
-        "id": "papa_250",
-        "categoria": "extras",
-        "nombre": "Ración de Papa 250gr",
-        "precio": 2.50,
-        "descripcion": "Porción individual de papas fritas doraditas y crujientes.",
-        "badge": "🍟 Individual",
         "emoji": "🍟"
     },
     {
@@ -248,15 +213,6 @@ MENU_ITEMS = [
         "emoji": "🍹"
     },
     {
-        "id": "refresco_botellita",
-        "categoria": "bebidas",
-        "nombre": "Refresco Botellita",
-        "precio": 1.00,
-        "descripcion": "Refresco personal helado (Coca-Cola, Pepsi, Hit, Chinotto).",
-        "badge": "🥤 Helado",
-        "emoji": "🥤"
-    },
-    {
         "id": "refresco_1l",
         "categoria": "bebidas",
         "nombre": "Refresco 1.0L",
@@ -271,14 +227,14 @@ MENU_ITEMS = [
 # CONFIGURACIÓN DE PÁGINA
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title=f"{NOMBRE_NEGOCIO} | Pedidos",
+    page_title=f"{NOMBRE_NEGOCIO} | Menú Oficial",
     page_icon="🍔",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS CON DEGRADADO DINÁMICO DE LA MARCA
+# ESTILOS CSS PERSONALIZADOS CON FUEGO Y CRISTAL
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -289,7 +245,7 @@ st.markdown(
         font-family: 'Poppins', sans-serif;
     }
 
-    /* Fondo con degradado fluido (Negro, Rojo Ahumado y Destello Dorado) */
+    /* Fondo Degradado con colores de la marca */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #2A080A 0%, #120405 45%, #08080A 100%) !important;
         background-attachment: fixed !important;
@@ -298,42 +254,49 @@ st.markdown(
 
     header, footer {visibility: hidden;}
 
-    /* Contenedor del Header con brillo ambiental */
-    .header-box {
-        text-align: center;
-        padding: 10px 0 20px 0;
+    /* Contenedores con efecto Cristal */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(20, 20, 25, 0.75) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(229, 27, 36, 0.3) !important;
+        border-radius: 18px !important;
     }
 
-    /* Botón Instagram con Gradiente Oficial */
+    /* Botón Instagram */
     .ig-button {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
         color: #FFFFFF !important;
-        padding: 8px 18px;
-        border-radius: 25px;
+        padding: 10px 22px;
+        border-radius: 30px;
         font-weight: 700;
         font-size: 14px;
         text-decoration: none;
         box-shadow: 0 4px 15px rgba(220, 39, 67, 0.4);
         transition: transform 0.2s ease;
-        margin-top: 10px;
     }
+    .ig-button:hover { transform: scale(1.05); }
 
-    .ig-button:hover {
-        transform: scale(1.05);
+    /* Botón Mapa */
+    .map-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #E51B24 0%, #B30006 100%);
+        color: #FFFFFF !important;
+        padding: 10px 22px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(229, 27, 36, 0.4);
+        transition: transform 0.2s ease;
     }
+    .map-button:hover { transform: scale(1.05); }
 
-    /* Tarjetas del Menú con cristal traslúcido */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(20, 20, 25, 0.75) !important;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(229, 27, 36, 0.3) !important;
-        border-radius: 16px !important;
-    }
-
-    /* Badges con Amarillo y Rojo del Logo */
+    /* Badges */
     .badge-tag {
         background-color: rgba(229, 27, 36, 0.2);
         border: 1px solid #E51B24;
@@ -353,7 +316,7 @@ st.markdown(
         margin-top: 4px;
     }
 
-    /* Botón de Enviar Pedido por WhatsApp */
+    /* Botón WhatsApp */
     .wa-btn {
         display: block;
         width: 100%;
@@ -369,12 +332,8 @@ st.markdown(
         text-transform: uppercase;
         box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
     }
+    .wa-btn:hover { transform: translateY(-2px); }
 
-    .wa-btn:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Estilos para botones nativos */
     div.stButton > button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -383,6 +342,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 # ---------------------------------------------------------
 # ESTADO DEL CARRITO
 # ---------------------------------------------------------
@@ -415,7 +375,7 @@ def actualizar_especificaciones(item_id, notas):
         st.session_state["carrito"][item_id]["especificaciones"] = notas.strip() if notas else "Con todo"
 
 # ---------------------------------------------------------
-# HEADER CON LOGO Y BOTÓN DE INSTAGRAM
+# HEADER: LOGO, REDES Y UBICACIÓN
 # ---------------------------------------------------------
 base_dir = os.path.dirname(__file__)
 logo_path = None
@@ -438,17 +398,52 @@ with col_c:
 
     st.markdown(
         f"""
-        <div style="text-align: center; margin-top: -10px; margin-bottom: 20px;">
+        <div style="text-align: center; margin-top: -10px; margin-bottom: 15px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
             <a href="{INSTAGRAM_URL}" target="_blank" class="ig-button">
                 <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
-                @{INSTAGRAM_HANDLE}
+                Síguenos @{INSTAGRAM_HANDLE}
+            </a>
+            <a href="{MAPS_URL}" target="_blank" class="map-button">
+                📍 Ver Ubicación en Google Maps
             </a>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+# ---------------------------------------------------------
+# SECCIÓN GALERÍA DE INSTAGRAM Y FOTOS
+# ---------------------------------------------------------
+with st.expander("📸 Ver Fotos del Menú & Especialidades Oficiales", expanded=False):
+    st.markdown("<p style='text-align:center; color:#AAA;'>Descubre nuestros platillos estrella directamente de la cocina:</p>", unsafe_allow_html=True)
+    g1, g2, g3 = st.columns(3)
+    with g1:
+        img1 = os.path.join(base_dir, "assets", "menu_page1.jpg")
+        if os.path.exists(img1):
+            st.image(img1, caption="🍔 Hamburguesas & Perros", use_container_width=True)
+        else:
+            st.info("🍔 Hamburguesas con Smash Beef y Toppings Extra")
+    with g2:
+        img2 = os.path.join(os.path.dirname(__file__), "assets", "menu_page2.jpg")
+        if os.path.exists(img2):
+            st.image(img2, caption="🌯 Enrollados & Pepitos Monstruo", use_container_width=True)
+        else:
+            st.info("🌭 Perros Calientes Especiales y Polacos")
+    with g3:
+        st.markdown(
+            f"""
+            <div style="text-align:center; padding: 25px 15px; background: rgba(229, 27, 36, 0.1); border-radius: 16px; border: 1px dashed #E51B24;">
+                <h4 style="color:#FFC72C; margin-bottom: 8px;">📸 ¿Quieres ver más?</h4>
+                <p style="font-size:13px; color:#DDD;">Publicamos promociones diarias y videos en vivo en nuestro perfil.</p>
+                <a href="{INSTAGRAM_URL}" target="_blank" class="ig-button" style="margin-top:10px;">
+                    Ver en Instagram 📲
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 st.divider()
 
@@ -527,7 +522,6 @@ with col_order:
         st.info("Tu carrito está vacío. Elige tus platillos favoritos del menú.")
     else:
         subtotal_orden = sum(d["subtotal"] for d in carrito.values())
-        cant_total = sum(d["cantidad"] for d in carrito.values())
 
         # Desglose de productos agregados
         for pid, datos in list(carrito.items()):
@@ -589,15 +583,15 @@ with col_order:
 
         st.markdown(
             f"""
-            <div style="background-color: #1A1A1A; padding: 15px; border-radius: 12px; border: 1px solid #E51B24; margin-top: 15px;">
-                <div style="display:flex; justify-style:space-between; color:#AAAAAA; font-size:14px;">
+            <div style="background-color: rgba(20, 20, 25, 0.9); padding: 15px; border-radius: 12px; border: 1px solid #E51B24; margin-top: 15px;">
+                <div style="display:flex; justify-content:space-between; color:#AAAAAA; font-size:14px;">
                     <span>Subtotal:</span><span style="color:#FFF;">${subtotal_orden:.2f}</span>
                 </div>
-                <div style="display:flex; justify-style:space-between; color:#AAAAAA; font-size:14px;">
+                <div style="display:flex; justify-content:space-between; color:#AAAAAA; font-size:14px;">
                     <span>Delivery:</span><span style="color:#FFF;">${costo_envio:.2f}</span>
                 </div>
                 <hr style="border-color:#333;">
-                <div style="display:flex; justify-style:space-between; font-size:20px; font-weight:900; color:#FFC72C;">
+                <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:900; color:#FFC72C;">
                     <span>TOTAL:</span><span>${total_final:.2f}</span>
                 </div>
             </div>
